@@ -1,7 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
+import { useCartStore } from "../../src/store/cartStore";
 
 export default function MainLayout() {
+  const items = useCartStore((s) => s.items);
+
   return (
     <Tabs
       screenOptions={{
@@ -40,7 +44,14 @@ export default function MainLayout() {
         options={{
           title: "Cart",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cart" size={22} color={color} />
+            <View>
+              <Ionicons name="cart" size={22} color={color} />
+              {items.length > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{items.length}</Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -64,3 +75,20 @@ export default function MainLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -10,
+    backgroundColor: "red",
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+  },
+
+  badgeText: {
+    color: "#fff",
+    fontSize: 10,
+  },
+});
