@@ -1,18 +1,66 @@
-import { Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 export default function MainLayout() {
   return (
-    <Stack
+    <Tabs
       screenOptions={{
         headerShown: false,
-        animation: "slide_from_right",
+        tabBarStyle: {
+          backgroundColor: "#111",
+          borderTopWidth: 0,
+          height: 70,
+        },
+        tabBarActiveTintColor: "#fff",
+        tabBarInactiveTintColor: "#888",
       }}
     >
-      <Stack.Screen name="dashboard" />
-      <Stack.Screen name="marketplace" />
-      <Stack.Screen name="cart" />
-      <Stack.Screen name="checkout" />
-      <Stack.Screen name="profile" />
-    </Stack>
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "Home",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="home" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="marketplace"
+        options={{
+          title: "Shop",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="storefront" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Cart",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="cart" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="checkout"
+        options={{
+          href: null,
+        }}
+      />
+    </Tabs>
   );
 }
