@@ -2,7 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-export default function ProductCard({ item }: any) {
+export default function ProductCard({
+  item,
+  onAdd,
+  onRemove,
+  onIncrease,
+  onDecrease,
+  quantity = 0,
+  variant = "default",
+}: any) {
   const [fav, setFav] = useState(false);
 
   return (
@@ -17,6 +25,12 @@ export default function ProductCard({ item }: any) {
             color={fav ? "red" : "#fff"}
           />
         </TouchableOpacity>
+
+        {variant === "cart" && (
+          <TouchableOpacity style={styles.remove} onPress={onRemove}>
+            <Ionicons name="trash" size={16} color="#fff" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <Text style={styles.title}>{item.title}</Text>
@@ -24,9 +38,24 @@ export default function ProductCard({ item }: any) {
 
       <View style={styles.footer}>
         <Text style={styles.price}>${item.price}</Text>
-        <TouchableOpacity style={styles.add}>
-          <Ionicons name="add" size={16} color="#fff" />
-        </TouchableOpacity>
+
+        {variant === "default" ? (
+          <TouchableOpacity style={styles.add} onPress={onAdd}>
+            <Ionicons name="add" size={16} color="#fff" />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.qty}>
+            <TouchableOpacity onPress={onDecrease}>
+              <Ionicons name="remove" size={16} color="#fff" />
+            </TouchableOpacity>
+
+            <Text style={styles.qtyText}>{quantity}</Text>
+
+            <TouchableOpacity onPress={onIncrease}>
+              <Ionicons name="add" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -38,7 +67,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#111",
     borderRadius: 16,
     padding: 10,
-    marginHorizontal: 4,
+    margin: 6,
   },
 
   imageContainer: {
@@ -60,6 +89,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 
+  remove: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    padding: 6,
+    borderRadius: 20,
+  },
+
   title: {
     color: "#fff",
     marginTop: 10,
@@ -73,6 +111,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 10,
   },
 
@@ -84,5 +123,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#6750a4",
     borderRadius: 20,
     padding: 6,
+  },
+
+  qty: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  qtyText: {
+    color: "#fff",
   },
 });
