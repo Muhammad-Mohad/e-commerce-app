@@ -2,6 +2,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import Header from "../../src/components/Header";
 import HeroCard from "../../src/components/HeroCard";
 import ProductCard from "../../src/components/ProductCard";
+import { useCartStore } from "../../src/store/cartStore";
 
 const products = [
   {
@@ -28,6 +29,8 @@ const products = [
 ];
 
 export default function Home() {
+  const addToCart = useCartStore((state) => state.addToCart);
+
   return (
     <View style={styles.container}>
       <Header />
@@ -38,8 +41,11 @@ export default function Home() {
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={styles.row}
-        renderItem={({ item }) => <ProductCard item={item} />}
+        renderItem={({ item }) => (
+          <ProductCard item={item} onAdd={() => addToCart(item)} />
+        )}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
       />
     </View>
   );
