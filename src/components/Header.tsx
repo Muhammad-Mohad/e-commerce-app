@@ -25,8 +25,8 @@ export default function Header() {
     <>
       <View style={styles.container}>
         <View style={styles.topRow}>
-          <Text style={styles.logo}>BONZO</Text>
-
+          <Text style={styles.name}>BONZO</Text>{" "}
+          <Text style={styles.logo}>∞</Text>
           <TouchableOpacity onPress={() => setOpen(true)}>
             <Ionicons name="menu" size={24} color="#fff" />
           </TouchableOpacity>
@@ -80,11 +80,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
-  logo: {
+  name: {
     color: "#fff",
     fontSize: 18,
     letterSpacing: 4,
   },
+  logo: {
+    color: "#a78bfa",
+    fontSize: 18,
+  },
+
   search: {
     flexDirection: "row",
     alignItems: "center",
