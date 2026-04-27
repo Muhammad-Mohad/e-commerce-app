@@ -25,8 +25,7 @@ export default function Header() {
     <>
       <View style={styles.container}>
         <View style={styles.topRow}>
-          <Text style={styles.name}>BONZO</Text>{" "}
-          <Text style={styles.logo}>∞</Text>
+          <Text style={styles.name}>BONZO</Text>
           <TouchableOpacity onPress={() => setOpen(true)}>
             <Ionicons name="menu" size={24} color="#fff" />
           </TouchableOpacity>
