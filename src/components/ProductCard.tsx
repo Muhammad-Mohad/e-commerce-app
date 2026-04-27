@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -12,13 +13,34 @@ export default function ProductCard({
   variant = "default",
 }: any) {
   const [fav, setFav] = useState(false);
+  const router = useRouter();
+
+  const handleNavigate = () => {
+    if (variant === "default") {
+      router.push({
+        pathname: "/productDetail",
+        params: { item: JSON.stringify(item) },
+      });
+    }
+  };
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      activeOpacity={0.9}
+      onPress={handleNavigate}
+    >
       <View style={styles.imageContainer}>
         <Image source={item.image} style={styles.image} />
 
-        <TouchableOpacity style={styles.fav} onPress={() => setFav(!fav)}>
+        {/* Favorite */}
+        <TouchableOpacity
+          style={styles.fav}
+          onPress={(e) => {
+            e.stopPropagation();
+            setFav(!fav);
+          }}
+        >
           <Ionicons
             name={fav ? "heart" : "heart-outline"}
             size={18}
@@ -26,8 +48,15 @@ export default function ProductCard({
           />
         </TouchableOpacity>
 
+        {/* Remove (Cart Variant) */}
         {variant === "cart" && (
-          <TouchableOpacity style={styles.remove} onPress={onRemove}>
+          <TouchableOpacity
+            style={styles.remove}
+            onPress={(e) => {
+              e.stopPropagation();
+              onRemove && onRemove();
+            }}
+          >
             <Ionicons name="trash" size={16} color="#fff" />
           </TouchableOpacity>
         )}
@@ -40,24 +69,40 @@ export default function ProductCard({
         <Text style={styles.price}>${item.price}</Text>
 
         {variant === "default" ? (
-          <TouchableOpacity style={styles.add} onPress={onAdd}>
+          <TouchableOpacity
+            style={styles.add}
+            onPress={(e) => {
+              e.stopPropagation();
+              onAdd && onAdd();
+            }}
+          >
             <Ionicons name="add" size={16} color="#fff" />
           </TouchableOpacity>
         ) : (
           <View style={styles.qty}>
-            <TouchableOpacity onPress={onDecrease}>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                onDecrease && onDecrease();
+              }}
+            >
               <Ionicons name="remove" size={16} color="#fff" />
             </TouchableOpacity>
 
             <Text style={styles.qtyText}>{quantity}</Text>
 
-            <TouchableOpacity onPress={onIncrease}>
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                onIncrease && onIncrease();
+              }}
+            >
               <Ionicons name="add" size={16} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -93,14 +138,16 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 8,
     left: 8,
-    backgroundColor: "rgba(0,0,0,0.6)",
+    backgroundColor: "rgba(255,0,0,0.8)",
     padding: 6,
     borderRadius: 20,
+    zIndex: 10,
   },
 
   title: {
     color: "#fff",
     marginTop: 10,
+    fontSize: 14,
   },
 
   desc: {
@@ -117,6 +164,7 @@ const styles = StyleSheet.create({
 
   price: {
     color: "#a78bfa",
+    fontSize: 14,
   },
 
   add: {
@@ -129,9 +177,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+    backgroundColor: "#222",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
   },
 
   qtyText: {
     color: "#fff",
+    fontSize: 13,
   },
 });
