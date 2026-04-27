@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   FlatList,
   Image,
@@ -10,7 +11,12 @@ import {
 import { useCartStore } from "../../src/store/cartStore";
 
 export default function Cart() {
-  const { items, removeFromCart, increaseQty, decreaseQty } = useCartStore();
+  const router = useRouter();
+
+  const items = useCartStore((s: any) => s.items);
+  const removeFromCart = useCartStore((s: any) => s.removeFromCart);
+  const increaseQty = useCartStore((s: any) => s.increaseQty);
+  const decreaseQty = useCartStore((s: any) => s.decreaseQty);
 
   if (items.length === 0) {
     return (
@@ -44,15 +50,15 @@ export default function Cart() {
               style={styles.remove}
               onPress={() => removeFromCart(item.id)}
             >
-              <Ionicons name="trash" size={18} color="#fff" />
+              <Ionicons name="trash-outline" size={18} color="#fff" />
             </TouchableOpacity>
 
             <Image source={item.image} style={styles.image} />
 
             <View style={styles.content}>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.desc}>{item.desc}</Text>
               <Text style={styles.price}>${item.price}</Text>
+              <Text style={styles.desc}>{item.desc}</Text>
 
               <View style={styles.qty}>
                 <TouchableOpacity
@@ -82,7 +88,10 @@ export default function Cart() {
           <Text style={styles.total}>${total.toFixed(2)}</Text>
         </View>
 
-        <TouchableOpacity style={styles.checkout}>
+        <TouchableOpacity
+          style={styles.checkout}
+          onPress={() => router.push("/checkout")}
+        >
           <Text style={styles.checkoutText}>CHECKOUT</Text>
         </TouchableOpacity>
       </View>
@@ -155,12 +164,12 @@ const styles = StyleSheet.create({
   desc: {
     color: "#888",
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 4,
   },
 
   price: {
     color: "#a78bfa",
-    marginTop: 6,
+    marginTop: 4,
     fontSize: 14,
   },
 
