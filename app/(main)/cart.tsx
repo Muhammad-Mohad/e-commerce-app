@@ -53,7 +53,14 @@ export default function Cart() {
               <Ionicons name="trash-outline" size={18} color="#fff" />
             </TouchableOpacity>
 
-            <Image source={item.image} style={styles.image} />
+            <Image
+              source={
+                typeof item.image === "string"
+                  ? { uri: item.image }
+                  : item.image
+              }
+              style={styles.image}
+            />
 
             <View style={styles.content}>
               <Text style={styles.title}>{item.title}</Text>

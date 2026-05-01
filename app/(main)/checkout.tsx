@@ -8,8 +8,12 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
 import { useCartStore } from "../../src/store/cartStore";
+
+import { auth, db } from "../../firebaseConfig";
+import { ref, push, set } from "firebase/database";
 
 type FormType = {
   firstName: string;
@@ -26,6 +30,7 @@ type ErrorsType = Partial<FormType> & {
 export default function Checkout() {
   const router = useRouter();
   const items = useCartStore((s: any) => s.items);
+  const clearCart = useCartStore((s: any) => s.clearCart); 
 
   const [form, setForm] = useState<FormType>({
     firstName: "",
@@ -37,6 +42,7 @@ export default function Checkout() {
 
   const [payment, setPayment] = useState<"cash" | "card" | null>(null);
   const [errors, setErrors] = useState<ErrorsType>({});
+  const [isSubmitting, setIsSubmitting] = useState(false); 
 
   const total = items.reduce(
     (sum: number, i: any) => sum + i.price * i.quantity,
@@ -58,9 +64,42 @@ export default function Checkout() {
     return Object.keys(err).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
-    router.push("/home");
+
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert("Authentication Error", "You must be logged in to place an order.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const orderData = {
+        customerDetails: form,
+        paymentMethod: payment,
+        products: items, 
+        orderTotal: total,
+        status: "Pending",
+        orderDate: new Date().toISOString(),
+      };
+
+      const ordersRef = ref(db, `users/${user.uid}/orders`);
+      
+      const newOrderRef = push(ordersRef);
+      
+      await set(newOrderRef, orderData);
+
+      if (clearCart) clearCart(); 
+      Alert.alert("Success", "Your order has been placed successfully!");
+      router.replace("/home"); 
+
+    } catch (error: any) {
+      Alert.alert("Checkout Error", error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -76,7 +115,6 @@ export default function Checkout() {
         onChangeText={(v) => setForm({ ...form, firstName: v })}
         error={errors.firstName}
       />
-
       <Input
         placeholder="Last Name"
         value={form.lastName}
@@ -154,8 +192,14 @@ export default function Checkout() {
         <Text style={styles.total}>${total.toFixed(2)}</Text>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-        <Text style={styles.btnText}>PLACE ORDER</Text>
+      <TouchableOpacity 
+        style={[styles.button, isSubmitting && { opacity: 0.7 }]} 
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+      >
+        <Text style={styles.btnText}>
+          {isSubmitting ? "PROCESSING..." : "PLACE ORDER"}
+        </Text>
       </TouchableOpacity>
     </View>
   );

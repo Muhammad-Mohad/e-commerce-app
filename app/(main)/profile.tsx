@@ -16,12 +16,6 @@ import { signOut } from "firebase/auth";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-type OrderType = {
-  id: string;
-  total: number;
-  items: number;
-};
-
 export default function Profile() {
   const router = useRouter();
   const [userName, setUserName] = useState("User");
@@ -32,18 +26,37 @@ export default function Profile() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [orders, setOrders] = useState<any[]>([]);
+
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
       setUserEmail(user.email || "No email found");
 
       const userRef = ref(db, `users/${user.uid}`);
+      const ordersRef = ref(db, `users/${user.uid}/orders`);
 
-      const unsubscribe = onValue(userRef, (snapshot) => {
+      const unsubUser = onValue(userRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
           setUserName(data.username || "User");
           setAddress(data.address || ""); 
+        }
+      });
+
+      const unsubOrders = onValue(ordersRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const ordersArray = Object.keys(data).map((key) => ({
+            id: key,
+            total: data[key].orderTotal,
+            items: data[key].products ? data[key].products.length : 0,
+            date: data[key].orderDate, 
+          }));
+
+          setOrders(ordersArray.reverse());
+        } else {
+          setOrders([]);
         }
         setLoading(false);
       }, (err) => {
@@ -51,7 +64,10 @@ export default function Profile() {
         setLoading(false);
       });
 
-      return () => unsubscribe();
+      return () => {
+        unsubUser();
+        unsubOrders();
+      };
     } else {
       setLoading(false);
     }
@@ -94,12 +110,6 @@ export default function Profile() {
     }
   };
 
-  const orders: OrderType[] = [
-    { id: "1", total: 320, items: 2 },
-    { id: "2", total: 145, items: 1 },
-    { id: "3", total: 560, items: 4 },
-  ];
-
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center' }]}>
@@ -113,9 +123,6 @@ export default function Profile() {
       <TouchableOpacity style={styles.topLogoutBtn} onPress={handleLogout}>
         <Ionicons name="log-out-outline" size={26} color="#ff4444" />
       </TouchableOpacity>
-
-      <Text style={styles.logo}>∞</Text>
-      <Text style={styles.brand}>BONZO</Text>
 
       <View style={styles.user}>
         <View style={styles.avatarPlaceholder}>
@@ -145,7 +152,11 @@ export default function Profile() {
 
       <View style={styles.sectionBox}>
         <Text style={styles.section}>Previous Orders</Text>
-        <OrdersList orders={orders} />
+        {orders.length > 0 ? (
+          <OrdersList orders={orders} />
+        ) : (
+          <Text style={styles.placeholder}>No orders yet</Text>
+        )}
       </View>
 
       <Modal transparent visible={modalVisible} animationType="fade">
@@ -185,8 +196,8 @@ const styles = StyleSheet.create({
   },
   topLogoutBtn: {
     position: "absolute",
-    top: 50,
-    right: 20,
+    top: 40,
+    right: 10,
     zIndex: 10,
     padding: 5,
   },
@@ -205,6 +216,7 @@ const styles = StyleSheet.create({
     fontFamily: "Rosemary",
   },
   user: {
+    marginTop: 40,
     alignItems: "center",
     marginBottom: 20,
   },

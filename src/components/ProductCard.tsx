@@ -31,9 +31,12 @@ export default function ProductCard({
       onPress={handleNavigate}
     >
       <View style={styles.imageContainer}>
-        <Image source={item.image} style={styles.image} />
+        <Image source={
+    typeof item.image === 'string' 
+      ? { uri: item.image } 
+      : item.image 
+  } style={styles.image} />
 
-        {/* Favorite */}
         <TouchableOpacity
           style={styles.fav}
           onPress={(e) => {
@@ -48,7 +51,6 @@ export default function ProductCard({
           />
         </TouchableOpacity>
 
-        {/* Remove (Cart Variant) */}
         {variant === "cart" && (
           <TouchableOpacity
             style={styles.remove}

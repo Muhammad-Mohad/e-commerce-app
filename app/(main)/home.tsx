@@ -1,51 +1,84 @@
-import { FlatList, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import { FlatList, StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
 import Header from "../../src/components/Header";
 import HeroCard from "../../src/components/HeroCard";
 import ProductCard from "../../src/components/ProductCard";
 import { useCartStore } from "../../src/store/cartStore";
+import { useRouter } from "expo-router";
 
-const products = [
-  {
-    id: "1",
-    title: "Aura Vase",
-    desc: "Minimal ceramic vase",
-    price: 120,
-    image: require("../../assets/images/p1.jpg"),
-  },
-  {
-    id: "2",
-    title: "Wood Stool",
-    desc: "Natural wood design",
-    price: 285,
-    image: require("../../assets/images/p2.jpg"),
-  },
-  {
-    id: "3",
-    title: "Glass Vessel",
-    desc: "Elegant light diffuser",
-    price: 85,
-    image: require("../../assets/images/p3.jpg"),
-  },
-];
+// --- FIREBASE IMPORTS ---
+import { db } from "../../firebaseConfig";
+import { ref, onValue, query, limitToFirst } from "firebase/database";
 
 export default function Home() {
-  const addToCart = useCartStore((state) => state.addToCart);
+  const router = useRouter();
+  const addToCart = useCartStore((state: any) => state.addToCart);
+  
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // We create a query to fetch only the first 4 products from the database
+    const productsQuery = query(ref(db, "products"), limitToFirst(4));
+
+    const unsubscribe = onValue(productsQuery, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Mapping Firebase object keys to an array for FlatList
+        const productsArray = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setProducts(productsArray);
+      } else {
+        setProducts([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Firebase Read Error:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#a78bfa" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <Header />
-      <HeroCard />
-
+      
+      {/* FlatList Header used to scroll HeroCard with the list */}
       <FlatList
         data={products}
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={styles.row}
+        ListHeaderComponent={
+          <>
+            <HeroCard />
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Featured Products</Text>
+              <TouchableOpacity onPress={() => router.push("/marketplace")}>
+                <Text style={styles.viewAll}>View All</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        }
         renderItem={({ item }) => (
-          <ProductCard item={item} onAdd={() => addToCart(item)} />
+          <ProductCard 
+            item={item} 
+            onAdd={() => addToCart(item)} 
+          />
         )}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
     </View>
   );
@@ -58,9 +91,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 20,
   },
-
   row: {
     justifyContent: "space-between",
     marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 15,
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: "Rosemary",
+    letterSpacing: 1,
+  },
+  viewAll: {
+    color: "#a78bfa",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

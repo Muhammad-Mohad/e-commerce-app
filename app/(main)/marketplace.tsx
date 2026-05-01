@@ -1,66 +1,60 @@
-import { FlatList, StyleSheet, Text, View } from "react-native";
+import React, { useState, useEffect } from "react";
+import { FlatList, StyleSheet, Text, View, ActivityIndicator } from "react-native";
 import Header from "../../src/components/Header";
 import ProductCard from "../../src/components/ProductCard";
 import { useCartStore } from "../../src/store/cartStore";
 
-const products = [
-  {
-    id: "1",
-    title: "Aura Vase",
-    desc: "Minimal ceramic vase",
-    price: 120,
-    image: require("../../assets/images/p1.jpg"),
-  },
-  {
-    id: "2",
-    title: "Wood Stool",
-    desc: "Natural wood design",
-    price: 285,
-    image: require("../../assets/images/p2.jpg"),
-  },
-  {
-    id: "3",
-    title: "Glass Vessel",
-    desc: "Elegant light diffuser",
-    price: 85,
-    image: require("../../assets/images/p3.jpg"),
-  },
-  {
-    id: "4",
-    title: "Luxe Lamp",
-    desc: "Soft ambient lighting",
-    price: 190,
-    image: require("../../assets/images/p4.jpg"),
-  },
-  {
-    id: "5",
-    title: "Marble Tray",
-    desc: "Premium stone finish",
-    price: 75,
-    image: require("../../assets/images/p5.jpg"),
-  },
-  {
-    id: "6",
-    title: "Velvet Chair",
-    desc: "Comfort meets elegance",
-    price: 320,
-    image: require("../../assets/images/p6.jpg"),
-  },
-];
+import { db } from "../../firebaseConfig";
+import { ref, onValue } from "firebase/database";
 
 export default function Marketplace() {
+
   const addToCart = useCartStore((s: any) => s.addToCart);
   const items = useCartStore((s: any) => s.items);
+
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const productsRef = ref(db, "products");
+    
+    const unsubscribe = onValue(productsRef, (snapshot) => {
+      const data = snapshot.val();
+      
+      if (data) {
+        const productsArray = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setProducts(productsArray);
+      } else {
+        setProducts([]); 
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Failed to fetch products:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe(); 
+  }, []);
 
   const getQty = (id: string) => {
     const found = items.find((i: any) => i.id === id);
     return found ? found.quantity : 0;
   };
 
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#a78bfa" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header />
-
       <Text style={styles.title}>Marketplace</Text>
 
       <FlatList
@@ -82,6 +76,7 @@ export default function Marketplace() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

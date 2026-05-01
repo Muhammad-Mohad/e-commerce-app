@@ -22,7 +22,11 @@ export default function ProductDetail() {
         <Text style={styles.brand}>BONZO</Text>
       </View>
 
-      <Image source={product.image} style={styles.image} />
+      <Image source={
+    typeof product.image === 'string' 
+      ? { uri: product.image } 
+      : product.image
+  } style={styles.image} />
 
       <View style={styles.content}>
         <Text style={styles.title}>{product.title}</Text>
