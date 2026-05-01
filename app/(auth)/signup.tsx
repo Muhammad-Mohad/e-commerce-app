@@ -1,21 +1,21 @@
-import React, { useState } from "react";
-import { ref, set } from "firebase/database";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Link, useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { ref, set } from "firebase/database";
+import React, { useState } from "react";
 import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { db, auth } from "../.././firebaseConfig";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth, db } from "../.././firebaseConfig";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
@@ -28,34 +28,38 @@ export default function Signup() {
 
   const router = useRouter();
 
-const handleSignup = async () => {
-  if (!username || !email || !password || !confirmPassword) {
-    Alert.alert("Error", "Please fill in all fields");
-    return;
-  }
+  const handleSignup = async () => {
+    if (!username || !email || !password || !confirmPassword) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
 
-  if (password !== confirmPassword) {
-    Alert.alert("Error", "Passwords do not match");
-    return;
-  }
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
 
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
 
-    await set(ref(db, 'users/' + user.uid), {
-      username: username,
-      email: email,
-      createdAt: new Date().toISOString(),
-    });
+      await set(ref(db, "users/" + user.uid), {
+        username: username,
+        email: email,
+        createdAt: new Date().toISOString(),
+      });
 
-    await AsyncStorage.setItem("user_username", username);
+      await AsyncStorage.setItem("user_username", username);
 
-    router.replace("/home");
-  } catch (error: any) {
-    Alert.alert("Signup Error", error.message);
-  }
-};
+      router.replace("/adminPanel");
+    } catch (error: any) {
+      Alert.alert("Signup Error", error.message);
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -182,7 +186,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 40,
-    marginTop: 60, 
+    marginTop: 60,
   },
   logo: {
     fontSize: 48,

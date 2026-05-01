@@ -1,21 +1,21 @@
-import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import React, { useState } from "react";
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../.././firebaseConfig";
-import { Ionicons } from "@expo/vector-icons"; 
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleLogin = async () => {
@@ -25,7 +25,7 @@ export default function Login() {
     }
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/home");
+      router.replace("/adminPanel");
     } catch (error: any) {
       Alert.alert("Login Error", error.message);
     }
@@ -57,7 +57,10 @@ export default function Login() {
             placeholder="Password"
             placeholderTextColor="#888"
             secureTextEntry={!showPassword}
-            style={[styles.input, { flex: 1, marginBottom: 0, borderBottomWidth: 0 }]}
+            style={[
+              styles.input,
+              { flex: 1, marginBottom: 0, borderBottomWidth: 0 },
+            ]}
             value={password}
             onChangeText={setPassword}
           />
