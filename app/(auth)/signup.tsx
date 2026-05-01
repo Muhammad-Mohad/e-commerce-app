@@ -1,61 +1,140 @@
-import { Link } from "expo-router";
+import React, { useState } from "react";
+import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../.././firebaseConfig";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Signup() {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const router = useRouter();
+
+  const handleSignup = async () => {
+    if (!username || !email || !password || !confirmPassword) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      await AsyncStorage.setItem("user_username", username);
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Signup Error", error.message);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      {/* Glow Background */}
-      <View style={styles.glowTop} />
-      <View style={styles.glowBottom} />
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={styles.container}
+    >
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
+      >
+        <View style={styles.glowTop} />
+        <View style={styles.glowBottom} />
 
-      {/* Brand */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>∞</Text>
-        <Text style={styles.brand}>BONZO</Text>
-      </View>
+        <View style={styles.header}>
+          <Text style={styles.logo}>∞</Text>
+          <Text style={styles.brand}>BONZO</Text>
+        </View>
 
-      {/* Form */}
-      <View style={styles.form}>
-        <TextInput
-          placeholder="First Name"
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
+        <View style={styles.form}>
+          <TextInput
+            placeholder="Username"
+            placeholderTextColor="#888"
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+          />
 
-        <TextInput
-          placeholder="Last Name"
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
+          <TextInput
+            placeholder="Email Address"
+            placeholderTextColor="#888"
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
 
-        <TextInput
-          placeholder="Email Address"
-          placeholderTextColor="#888"
-          style={styles.input}
-        />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Password"
+              placeholderTextColor="#888"
+              secureTextEntry={!showPassword}
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              value={password}
+              onChangeText={setPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={showPassword ? "eye-off" : "eye"}
+                size={20}
+                color="#888"
+              />
+            </TouchableOpacity>
+          </View>
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#888"
-          secureTextEntry
-          style={styles.input}
-        />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Confirm Password"
+              placeholderTextColor="#888"
+              secureTextEntry={!showConfirmPassword}
+              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+            <TouchableOpacity
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={styles.eyeIcon}
+            >
+              <Ionicons
+                name={showConfirmPassword ? "eye-off" : "eye"}
+                size={20}
+                color="#888"
+              />
+            </TouchableOpacity>
+          </View>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>SIGN UP</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
+            <Text style={styles.buttonText}>SIGN UP</Text>
+          </TouchableOpacity>
 
-        <Link href="/login" style={styles.link}>
-          Already have an account? Login
-        </Link>
-      </View>
-    </View>
+          <Link href="/login" style={styles.link}>
+            Already have an account? Login
+          </Link>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -63,11 +142,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#0a0a0f",
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: "center",
     paddingHorizontal: 24,
+    paddingBottom: 40,
   },
-
-  /* 🌌 Glow */
   glowTop: {
     position: "absolute",
     top: -100,
@@ -88,11 +169,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#d896ff",
     opacity: 0.1,
   },
-
-  /* 🧠 Header */
   header: {
     alignItems: "center",
-    marginBottom: 50,
+    marginBottom: 40,
+    marginTop: 60, 
   },
   logo: {
     fontSize: 48,
@@ -106,12 +186,9 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     fontFamily: "Rosemary",
   },
-
-  /* 📦 Form */
   form: {
     width: "100%",
   },
-
   input: {
     borderBottomWidth: 1,
     borderBottomColor: "#333",
@@ -121,17 +198,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Rosemary",
   },
-
-  /* 🚀 Button */
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+    marginBottom: 20,
+  },
+  eyeIcon: {
+    padding: 10,
+  },
   button: {
     backgroundColor: "#6750a4",
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: "center",
     marginTop: 10,
-    shadowColor: "#6750a4",
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
     elevation: 5,
   },
   buttonText: {
@@ -140,7 +222,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Rosemary",
   },
-
   link: {
     marginTop: 25,
     textAlign: "center",

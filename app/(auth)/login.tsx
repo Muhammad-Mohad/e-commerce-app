@@ -1,13 +1,36 @@
-import { Link } from "expo-router";
+import React, { useState } from "react";
+import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../.././firebaseConfig";
+import { Ionicons } from "@expo/vector-icons"; 
 
 export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); 
+  const router = useRouter();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter both email and password");
+      return;
+    }
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.replace("/home");
+    } catch (error: any) {
+      Alert.alert("Login Error", error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.glowTop} />
@@ -23,20 +46,38 @@ export default function Login() {
           placeholder="Email Address"
           placeholderTextColor="#888"
           style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
         />
 
-        <TextInput
-          placeholder="Password"
-          placeholderTextColor="#888"
-          secureTextEntry
-          style={styles.input}
-        />
+        <View style={styles.passwordContainer}>
+          <TextInput
+            placeholder="Password"
+            placeholderTextColor="#888"
+            secureTextEntry={!showPassword}
+            style={[styles.input, { flex: 1, marginBottom: 0, borderBottomWidth: 0 }]}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeIcon}
+          >
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={20}
+              color="#888"
+            />
+          </TouchableOpacity>
+        </View>
 
         <TouchableOpacity>
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>SIGN IN</Text>
         </TouchableOpacity>
 
@@ -55,7 +96,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
   },
-
   glowTop: {
     position: "absolute",
     top: -100,
@@ -76,7 +116,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#d896ff",
     opacity: 0.1,
   },
-
   header: {
     alignItems: "center",
     marginBottom: 60,
@@ -93,11 +132,9 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     fontFamily: "Rosemary",
   },
-
   form: {
     width: "100%",
   },
-
   input: {
     borderBottomWidth: 1,
     borderBottomColor: "#333",
@@ -107,7 +144,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Rosemary",
   },
-
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#333",
+    marginBottom: 25,
+  },
+  eyeIcon: {
+    padding: 10,
+  },
   forgot: {
     color: "#888",
     fontSize: 12,
@@ -115,7 +161,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     fontFamily: "Rosemary",
   },
-
   button: {
     backgroundColor: "#6750a4",
     paddingVertical: 14,
@@ -132,7 +177,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Rosemary",
   },
-
   link: {
     marginTop: 25,
     textAlign: "center",
