@@ -8,19 +8,13 @@ export default function Index() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      },
-      (error) => {
-        console.error("Auth State Error:", error);
-        setLoading(false);
-      },
-    );
+  const ADMIN_EMAIL = "admin@gmail.com";
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
     return () => unsubscribe();
   }, []);
 
@@ -32,7 +26,15 @@ export default function Index() {
     );
   }
 
-  return user ? <Redirect href="/adminPanel" /> : <Redirect href="/login" />;
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
+  return user.email === ADMIN_EMAIL ? (
+    <Redirect href="/adminPanel" />
+  ) : (
+    <Redirect href="/home" />
+  );
 }
 
 const styles = StyleSheet.create({

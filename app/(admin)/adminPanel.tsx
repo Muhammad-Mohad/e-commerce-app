@@ -1,80 +1,214 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  FlatList,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  TextInput,
+  ScrollView,
 } from "react-native";
 import DeleteModal from "../../src/components/DeleteModal";
 
-const products = [
-  {
-    id: "1",
-    title: "Aura Vase",
-    price: 120,
-    image: require("../../assets/images/p1.jpg"),
-  },
-  {
-    id: "2",
-    title: "Wood Stool",
-    price: 285,
-    image: require("../../assets/images/p2.jpg"),
-  },
-];
+import { db } from "../../firebaseConfig";
+import { ref, onValue, remove, update } from "firebase/database";
 
 export default function AdminPanel() {
-  const [visible, setVisible] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleDelete = (id: string) => {
-    setSelected(id);
-    setVisible(true);
+  const [delVisible, setDelVisible] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [editVisible, setEditVisible] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [desc, setDesc] = useState("");
+  const [image, setImage] = useState("");
+
+  useEffect(() => {
+    const productsRef = ref(db, "products");
+    const unsubscribe = onValue(productsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const productsArray = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+        setProducts(productsArray);
+      } else {
+        setProducts([]);
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const openEditModal = (item: any) => {
+    setEditId(item.id);
+    setTitle(item.title);
+    setPrice(item.price.toString());
+    setDesc(item.desc || "");
+    setImage(item.image || "");
+    setEditVisible(true);
   };
 
-  const confirmDelete = () => {
-    setVisible(false);
+  const handleUpdate = async () => {
+    if (!editId) return;
+    try {
+      await update(ref(db, `products/${editId}`), {
+        title,
+        price: parseFloat(price),
+        desc,
+        image,
+      });
+      setEditVisible(false);
+      Alert.alert("Success", "Product updated!");
+    } catch (error) {
+      Alert.alert("Error", "Update failed.");
+    }
   };
+
+  const confirmDelete = async () => {
+    if (selectedId) {
+      try {
+        const productRef = ref(db, `products/${selectedId}`);
+
+        const reviewsRef = ref(db, `productReviews/${selectedId}`);
+
+        await Promise.all([remove(productRef), remove(reviewsRef)]);
+
+        setDelVisible(false);
+        setSelectedId(null);
+
+        Alert.alert(
+          "Success",
+          "Product and all related reviews have been removed.",
+        );
+      } catch (error) {
+        console.error("Delete Error:", error);
+        Alert.alert("Error", "Something went wrong while deleting.");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#a78bfa" />
+      </View>
+    );
+  }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.logo}>∞</Text>
-      <Text style={styles.brand}>BONZO</Text>
-
-      <Text style={styles.section}>Your Products</Text>
-
-      {products.map((item) => (
-        <View key={item.id} style={styles.card}>
-          <Image source={item.image} style={styles.image} />
-
-          <View style={styles.info}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.price}>${item.price}</Text>
+    <View style={styles.container}>
+      <FlatList
+        data={products}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.logo}>∞</Text>
+            <Text style={styles.brand}>BONZO</Text>
+            <Text style={styles.section}>Your Products</Text>
+          </>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <Image source={{ uri: item.image }} style={styles.image} />
+            <View style={styles.info}>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.price}>Rs. {item.price}</Text>
+            </View>
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => openEditModal(item)}
+              >
+                <Ionicons name="create-outline" size={18} color="#fff" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => {
+                  setSelectedId(item.id);
+                  setDelVisible(true);
+                }}
+              >
+                <Ionicons name="trash-outline" size={18} color="#ff4d4d" />
+              </TouchableOpacity>
+            </View>
           </View>
+        )}
+      />
 
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <Ionicons name="create-outline" size={18} color="#fff" />
-            </TouchableOpacity>
+      <Modal visible={editVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Quick Update</Text>
+              <TouchableOpacity onPress={() => setEditVisible(false)}>
+                <Ionicons name="close" size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => handleDelete(item.id)}
-            >
-              <Ionicons name="trash-outline" size={18} color="#ff4d4d" />
-            </TouchableOpacity>
+            <ScrollView>
+              <Text style={styles.label}>Product Title</Text>
+              <TextInput
+                style={styles.input}
+                value={title}
+                onChangeText={setTitle}
+                placeholderTextColor="#666"
+              />
+
+              <Text style={styles.label}>Price (Rs.)</Text>
+              <TextInput
+                style={styles.input}
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="numeric"
+              />
+
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, { height: 80 }]}
+                value={desc}
+                onChangeText={setDesc}
+                multiline
+              />
+
+              <Text style={styles.label}>Image URL</Text>
+              <TextInput
+                style={styles.input}
+                value={image}
+                onChangeText={setImage}
+              />
+
+              <View style={styles.previewBox}>
+                <Image source={{ uri: image }} style={styles.fullPreview} />
+              </View>
+
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={handleUpdate}
+              >
+                <Text style={styles.btnText}>SAVE CHANGES</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
-      ))}
+      </Modal>
 
       <DeleteModal
-        visible={visible}
-        onCancel={() => setVisible(false)}
+        visible={delVisible}
+        onCancel={() => setDelVisible(false)}
         onConfirm={confirmDelete}
       />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -83,16 +217,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0a0a0f",
     paddingTop: 40,
-    padding: 16,
+    paddingHorizontal: 16,
   },
-
   logo: {
     fontSize: 48,
     color: "#a78bfa",
     textAlign: "center",
     fontFamily: "Rosemary",
   },
-
   brand: {
     color: "#fff",
     fontSize: 20,
@@ -101,27 +233,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: "Rosemary",
   },
-
-  profile: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  name: {
-    color: "#fff",
-    fontSize: 18,
-  },
-
-  email: {
-    color: "#888",
-  },
-
-  section: {
-    color: "#fff",
-    marginBottom: 10,
-    fontSize: 16,
-  },
-
+  section: { color: "#fff", marginBottom: 10, fontSize: 16 },
   card: {
     flexDirection: "row",
     alignItems: "center",
@@ -130,35 +242,52 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 12,
   },
+  image: { width: 60, height: 60, borderRadius: 10, marginRight: 10 },
+  info: { flex: 1 },
+  title: { color: "#fff", fontWeight: "500" },
+  price: { color: "#a78bfa", marginTop: 4 },
+  actions: { flexDirection: "row", gap: 10 },
+  iconBtn: { backgroundColor: "#222", padding: 8, borderRadius: 20 },
 
-  image: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-
-  info: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.8)",
+    justifyContent: "flex-end",
   },
-
-  title: {
-    color: "#fff",
+  modalContent: {
+    backgroundColor: "#111",
+    borderTopLeftRadius: 25,
+    borderTopRightRadius: 25,
+    padding: 20,
+    height: "80%",
   },
-
-  price: {
-    color: "#a78bfa",
-    marginTop: 4,
-  },
-
-  actions: {
+  modalHeader: {
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
-
-  iconBtn: {
+  modalTitle: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  label: { color: "#888", marginBottom: 5, fontSize: 12 },
+  input: {
     backgroundColor: "#222",
-    padding: 8,
-    borderRadius: 20,
+    color: "#fff",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 15,
   },
+  previewBox: {
+    height: 150,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginBottom: 20,
+    backgroundColor: "#000",
+  },
+  fullPreview: { width: "100%", height: "100%", resizeMode: "cover" },
+  primaryBtn: {
+    backgroundColor: "#6750a4",
+    padding: 16,
+    borderRadius: 25,
+    alignItems: "center",
+  },
+  btnText: { color: "#fff", fontWeight: "bold" },
 });

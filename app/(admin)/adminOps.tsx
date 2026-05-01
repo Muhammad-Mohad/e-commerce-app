@@ -7,13 +7,59 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
+  Alert,
 } from "react-native";
 
+import { db } from "../../firebaseConfig";
+import { ref, push, set } from "firebase/database";
+import { useRouter } from "expo-router";
+
 export default function AdminOps() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState<any>(null);
+  const [imageUrl, setImageUrl] = useState("");
+
+  const handleListProduct = async () => {
+    if (!title || !price || !desc) {
+      Alert.alert("Error", "Please fill in all the fields.");
+      return;
+    }
+
+    if (!imageUrl && !image) {
+      Alert.alert("Error", "Please provide an image URL or pick a photo.");
+      return;
+    }
+
+    try {
+      const productsRef = ref(db, "products");
+      const newProductRef = push(productsRef);
+
+      await set(newProductRef, {
+        title: title,
+        price: parseFloat(price),
+        desc: desc,
+        image: imageUrl || image,
+        createdAt: new Date().toISOString(),
+      });
+
+      Alert.alert("Success", "Product listed successfully!");
+
+      setTitle("");
+      setPrice("");
+      setDesc("");
+      setImage(null);
+      setImageUrl("");
+
+      router.back();
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not save product to database.");
+    }
+  };
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -23,6 +69,7 @@ export default function AdminOps() {
 
     if (!res.canceled) {
       setImage(res.assets[0].uri);
+      setImageUrl("");
     }
   };
 
@@ -33,11 +80,12 @@ export default function AdminOps() {
 
     if (!res.canceled) {
       setImage(res.assets[0].uri);
+      setImageUrl("");
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.logo}>∞</Text>
       <Text style={styles.brand}>BONZO</Text>
 
@@ -69,9 +117,20 @@ export default function AdminOps() {
         style={styles.input}
       />
 
+      <TextInput
+        placeholder="Image URL (Direct Link)"
+        placeholderTextColor="#666"
+        value={imageUrl}
+        onChangeText={(text) => {
+          setImageUrl(text);
+          if (text) setImage(null);
+        }}
+        style={styles.input}
+      />
+
       <View style={styles.imageBox}>
-        {image ? (
-          <Image source={{ uri: image }} style={styles.preview} />
+        {imageUrl || image ? (
+          <Image source={{ uri: imageUrl || image }} style={styles.preview} />
         ) : (
           <Text style={styles.placeholder}>No Image Selected</Text>
         )}
@@ -87,28 +146,27 @@ export default function AdminOps() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.primary}>
+      <TouchableOpacity style={styles.primary} onPress={handleListProduct}>
         <Text style={styles.btnText}>LIST PRODUCT</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     backgroundColor: "#0a0a0f",
     padding: 16,
     paddingTop: 40,
+    paddingBottom: 40,
   },
-
   logo: {
     fontSize: 48,
     color: "#a78bfa",
     textAlign: "center",
     fontFamily: "Rosemary",
   },
-
   brand: {
     color: "#fff",
     fontSize: 20,
@@ -117,13 +175,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontFamily: "Rosemary",
   },
-
   section: {
     color: "#fff",
     fontSize: 16,
     marginBottom: 20,
   },
-
   input: {
     backgroundColor: "#111",
     color: "#fff",
@@ -131,7 +187,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 14,
   },
-
   imageBox: {
     height: 160,
     backgroundColor: "#111",
@@ -139,24 +194,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,
+    overflow: "hidden",
   },
-
   preview: {
     width: "100%",
     height: "100%",
-    borderRadius: 14,
   },
-
   placeholder: {
     color: "#666",
   },
-
   row: {
     flexDirection: "row",
     gap: 10,
     marginBottom: 14,
   },
-
   secondary: {
     flex: 1,
     backgroundColor: "#333",
@@ -164,14 +215,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
   },
-
   primary: {
     backgroundColor: "#6750a4",
     padding: 14,
     borderRadius: 25,
     alignItems: "center",
   },
-
   btnText: {
     color: "#fff",
   },

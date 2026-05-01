@@ -10,15 +10,17 @@ export default function AdminLayout() {
           backgroundColor: "#111",
           borderTopWidth: 0,
           height: 70,
+          paddingBottom: 10, 
+          paddingTop: 5, 
         },
-        tabBarActiveTintColor: "#fff",
+        tabBarActiveTintColor: "#a78bfa", 
         tabBarInactiveTintColor: "#777",
       }}
     >
       <Tabs.Screen
         name="adminPanel"
         options={{
-          title: "Panel",
+          title: "Inventory",
           tabBarIcon: ({ color }) => (
             <Ionicons name="grid" size={22} color={color} />
           ),
@@ -28,9 +30,19 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="adminOps"
         options={{
-          title: "Operations",
+          title: "Add Product",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="settings" size={22} color={color} />
+            <Ionicons name="add-circle" size={24} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="adminProfile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={22} color={color} />
           ),
         }}
       />

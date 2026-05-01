@@ -19,15 +19,21 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password");
-      return;
-    }
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.replace("/adminPanel");
-    } catch (error: any) {
-      Alert.alert("Login Error", error.message);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      const user = userCredential.user;
+
+      if (user.email === "your-admin-email@example.com") {
+        router.replace("/adminPanel");
+      } else {
+        router.replace("/home");
+      }
+    } catch (error) {
+      Alert.alert("Login Failed", "Invalid credentials");
     }
   };
 
