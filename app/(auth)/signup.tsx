@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ref, set } from "firebase/database";
 import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
@@ -12,7 +13,7 @@ import {
   Platform,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../.././firebaseConfig";
+import { db, auth } from "../.././firebaseConfig";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -27,25 +28,34 @@ export default function Signup() {
 
   const router = useRouter();
 
-  const handleSignup = async () => {
-    if (!username || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
+const handleSignup = async () => {
+  if (!username || !email || !password || !confirmPassword) {
+    Alert.alert("Error", "Please fill in all fields");
+    return;
+  }
 
-    if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
-      return;
-    }
+  if (password !== confirmPassword) {
+    Alert.alert("Error", "Passwords do not match");
+    return;
+  }
 
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      await AsyncStorage.setItem("user_username", username);
-      router.replace("/home");
-    } catch (error: any) {
-      Alert.alert("Signup Error", error.message);
-    }
-  };
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+
+    await set(ref(db, 'users/' + user.uid), {
+      username: username,
+      email: email,
+      createdAt: new Date().toISOString(),
+    });
+
+    await AsyncStorage.setItem("user_username", username);
+
+    router.replace("/home");
+  } catch (error: any) {
+    Alert.alert("Signup Error", error.message);
+  }
+};
 
   return (
     <KeyboardAvoidingView
