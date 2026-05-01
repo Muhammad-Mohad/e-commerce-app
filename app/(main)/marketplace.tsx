@@ -8,12 +8,13 @@ import { db } from "../../firebaseConfig";
 import { ref, onValue } from "firebase/database";
 
 export default function Marketplace() {
-
   const addToCart = useCartStore((s: any) => s.addToCart);
   const items = useCartStore((s: any) => s.items);
 
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const productsRef = ref(db, "products");
@@ -39,6 +40,12 @@ export default function Marketplace() {
     return () => unsubscribe(); 
   }, []);
 
+
+  const filteredProducts = products.filter((product) =>
+    product.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.desc?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   const getQty = (id: string) => {
     const found = items.find((i: any) => i.id === id);
     return found ? found.quantity : 0;
@@ -54,15 +61,22 @@ export default function Marketplace() {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      
       <Text style={styles.title}>Marketplace</Text>
 
       <FlatList
-        data={products}
+        data={filteredProducts} 
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={styles.row}
         contentContainerStyle={{ paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          searchQuery ? (
+            <Text style={styles.emptyText}>No results found for {`"${searchQuery}"`}</Text>
+          ) : null
+        }
         renderItem={({ item }) => (
           <ProductCard
             item={item}
@@ -71,32 +85,14 @@ export default function Marketplace() {
             variant="default"
           />
         )}
-        showsVerticalScrollIndicator={false}
       />
     </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0a0a0f",
-    paddingHorizontal: 16,
-    paddingTop: 20,
-  },
-
-  title: {
-    color: "#fff",
-    fontSize: 22,
-    marginBottom: 10,
-    marginTop: 10,
-    fontFamily: "Rosemary",
-    letterSpacing: 2,
-  },
-
-  row: {
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: "#0a0a0f", paddingHorizontal: 16 , paddingTop: 20},
+  title: { color: "#fff", fontSize: 24, fontWeight: "bold", marginBottom: 15 },
+  row: { justifyContent: "space-between" },
+  emptyText: { color: "#888", textAlign: "center", marginTop: 50, fontSize: 16 }
 });

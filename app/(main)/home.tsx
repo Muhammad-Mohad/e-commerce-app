@@ -5,8 +5,6 @@ import HeroCard from "../../src/components/HeroCard";
 import ProductCard from "../../src/components/ProductCard";
 import { useCartStore } from "../../src/store/cartStore";
 import { useRouter } from "expo-router";
-
-// --- FIREBASE IMPORTS ---
 import { db } from "../../firebaseConfig";
 import { ref, onValue, query, limitToFirst } from "firebase/database";
 
@@ -17,14 +15,14 @@ export default function Home() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [searchQuery, setSearchQuery] = useState("");
+
   useEffect(() => {
-    // We create a query to fetch only the first 4 products from the database
     const productsQuery = query(ref(db, "products"), limitToFirst(4));
 
     const unsubscribe = onValue(productsQuery, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        // Mapping Firebase object keys to an array for FlatList
         const productsArray = Object.keys(data).map((key) => ({
           id: key,
           ...data[key],
@@ -42,6 +40,10 @@ export default function Home() {
     return () => unsubscribe();
   }, []);
 
+  const filteredProducts = products.filter((item) =>
+    item.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
@@ -52,11 +54,10 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
       
-      {/* FlatList Header used to scroll HeroCard with the list */}
       <FlatList
-        data={products}
+        data={filteredProducts} 
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={styles.row}
@@ -70,6 +71,16 @@ export default function Home() {
               </TouchableOpacity>
             </View>
           </>
+        }
+        ListEmptyComponent={
+          searchQuery ? (
+            <View style={{ alignItems: 'center', marginTop: 20 }}>
+              <Text style={{ color: '#888' }}>No results found for {`"${searchQuery}"`}</Text>
+              <TouchableOpacity onPress={() => router.push("/marketplace")}>
+                <Text style={[styles.viewAll, { marginTop: 10 }]}>Search entire Marketplace</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
         }
         renderItem={({ item }) => (
           <ProductCard 
