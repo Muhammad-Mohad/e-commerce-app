@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
-import { FlatList, StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from "react-native";
-import Header from "../../src/components/Header";
+import {
+  FlatList,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import HeroCard from "../../src/components/HeroCard";
 import ProductCard from "../../src/components/ProductCard";
 import { useCartStore } from "../../src/store/cartStore";
@@ -11,38 +17,36 @@ import { ref, onValue, query, limitToFirst } from "firebase/database";
 export default function Home() {
   const router = useRouter();
   const addToCart = useCartStore((state: any) => state.addToCart);
-  
+
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const productsQuery = query(ref(db, "products"), limitToFirst(4));
 
-    const unsubscribe = onValue(productsQuery, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const productsArray = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
-        setProducts(productsArray);
-      } else {
-        setProducts([]);
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error("Firebase Read Error:", error);
-      setLoading(false);
-    });
+    const unsubscribe = onValue(
+      productsQuery,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const productsArray = Object.keys(data).map((key) => ({
+            id: key,
+            ...data[key],
+          }));
+          setProducts(productsArray);
+        } else {
+          setProducts([]);
+        }
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Firebase Read Error:", error);
+        setLoading(false);
+      },
+    );
 
     return () => unsubscribe();
   }, []);
-
-  const filteredProducts = products.filter((item) =>
-    item.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -54,10 +58,12 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <Header searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-      
+      <View style={styles.simpleHeader}>
+        <Text style={styles.brandTitle}>BONZO</Text>
+      </View>
+
       <FlatList
-        data={filteredProducts} 
+        data={products}
         numColumns={2}
         keyExtractor={(item) => item.id}
         columnWrapperStyle={styles.row}
@@ -73,20 +79,14 @@ export default function Home() {
           </>
         }
         ListEmptyComponent={
-          searchQuery ? (
-            <View style={{ alignItems: 'center', marginTop: 20 }}>
-              <Text style={{ color: '#888' }}>No results found for {`"${searchQuery}"`}</Text>
-              <TouchableOpacity onPress={() => router.push("/marketplace")}>
-                <Text style={[styles.viewAll, { marginTop: 10 }]}>Search entire Marketplace</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null
+          <View style={{ alignItems: "center", marginTop: 20 }}>
+            <Text style={{ color: "#555", fontStyle: "italic" }}>
+              No featured products available.
+            </Text>
+          </View>
         }
         renderItem={({ item }) => (
-          <ProductCard 
-            item={item} 
-            onAdd={() => addToCart(item)} 
-          />
+          <ProductCard item={item} onAdd={() => addToCart(item)} />
         )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -101,6 +101,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#0a0a0f",
     paddingHorizontal: 16,
     paddingTop: 20,
+  },
+  simpleHeader: {
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 10,
+  },
+  brandTitle: {
+    color: "#fff",
+    fontSize: 20,
+    letterSpacing: 4,
+    fontFamily: "Rosemary",
   },
   row: {
     justifyContent: "space-between",
