@@ -15,16 +15,28 @@ import { db } from "../../firebaseConfig";
 import { ref, push, set } from "firebase/database";
 import { useRouter } from "expo-router";
 
+const CATEGORIES = [
+  "Vases",
+  "Sofas",
+  "Tables",
+  "Beds",
+  "Wall Arts",
+  "Chairs",
+  "Others",
+];
+
 export default function AdminOps() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [desc, setDesc] = useState("");
+  const [count, setCount] = useState("");
+  const [category, setCategory] = useState("Others");
   const [image, setImage] = useState<any>(null);
   const [imageUrl, setImageUrl] = useState("");
 
   const handleListProduct = async () => {
-    if (!title || !price || !desc) {
+    if (!title || !price || !desc || !count) {
       Alert.alert("Error", "Please fill in all the fields.");
       return;
     }
@@ -42,6 +54,8 @@ export default function AdminOps() {
         title: title,
         price: parseFloat(price),
         desc: desc,
+        count: parseInt(count, 10) || 0,
+        category: category,
         image: imageUrl || image,
         createdAt: new Date().toISOString(),
       });
@@ -51,6 +65,8 @@ export default function AdminOps() {
       setTitle("");
       setPrice("");
       setDesc("");
+      setCount("");
+      setCategory("Others");
       setImage(null);
       setImageUrl("");
 
@@ -99,6 +115,52 @@ export default function AdminOps() {
         style={styles.input}
       />
 
+      <Text style={styles.label}>Select Category</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.categoryScroll}
+      >
+        {CATEGORIES.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.categoryPill,
+              category === cat && styles.categoryPillActive,
+            ]}
+            onPress={() => setCategory(cat)}
+          >
+            <Text
+              style={[
+                styles.categoryText,
+                category === cat && styles.categoryTextActive,
+              ]}
+            >
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <View style={styles.row}>
+        <TextInput
+          placeholder="Price (Rs.)"
+          placeholderTextColor="#666"
+          value={price}
+          onChangeText={setPrice}
+          keyboardType="numeric"
+          style={[styles.input, { flex: 1, marginRight: 5 }]}
+        />
+        <TextInput
+          placeholder="Stock Count"
+          placeholderTextColor="#666"
+          value={count}
+          onChangeText={setCount}
+          keyboardType="numeric"
+          style={[styles.input, { flex: 1, marginLeft: 5 }]}
+        />
+      </View>
+
       <TextInput
         placeholder="Description"
         placeholderTextColor="#666"
@@ -106,15 +168,6 @@ export default function AdminOps() {
         onChangeText={setDesc}
         style={[styles.input, { height: 80 }]}
         multiline
-      />
-
-      <TextInput
-        placeholder="Price"
-        placeholderTextColor="#666"
-        value={price}
-        onChangeText={setPrice}
-        keyboardType="numeric"
-        style={styles.input}
       />
 
       <TextInput
@@ -178,7 +231,13 @@ const styles = StyleSheet.create({
   section: {
     color: "#fff",
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 10,
+  },
+  label: {
+    color: "#888",
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 4,
   },
   input: {
     backgroundColor: "#111",
@@ -186,6 +245,30 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     marginBottom: 14,
+  },
+  categoryScroll: {
+    marginBottom: 20,
+  },
+  categoryPill: {
+    backgroundColor: "#111",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#222",
+  },
+  categoryPillActive: {
+    backgroundColor: "#a78bfa",
+    borderColor: "#a78bfa",
+  },
+  categoryText: {
+    color: "#888",
+    fontSize: 14,
+  },
+  categoryTextActive: {
+    color: "#fff",
+    fontWeight: "bold",
   },
   imageBox: {
     height: 160,

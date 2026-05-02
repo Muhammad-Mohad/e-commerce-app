@@ -10,10 +10,10 @@ export default function AdminLayout() {
           backgroundColor: "#111",
           borderTopWidth: 0,
           height: 70,
-          paddingBottom: 10, 
-          paddingTop: 5, 
+          paddingBottom: 10,
+          paddingTop: 5,
         },
-        tabBarActiveTintColor: "#a78bfa", 
+        tabBarActiveTintColor: "#a78bfa",
         tabBarInactiveTintColor: "#777",
       }}
     >
@@ -22,7 +22,7 @@ export default function AdminLayout() {
         options={{
           title: "Inventory",
           tabBarIcon: ({ color }) => (
-            <Ionicons name="grid" size={22} color={color} />
+            <Ionicons name="cube" size={22} color={color} />
           ),
         }}
       />

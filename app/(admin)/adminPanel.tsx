@@ -18,6 +18,16 @@ import DeleteModal from "../../src/components/DeleteModal";
 import { db } from "../../firebaseConfig";
 import { ref, onValue, remove, update } from "firebase/database";
 
+const CATEGORIES = [
+  "Vases",
+  "Sofas",
+  "Tables",
+  "Beds",
+  "Wall Arts",
+  "Chairs",
+  "Others",
+];
+
 export default function AdminPanel() {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +40,8 @@ export default function AdminPanel() {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [desc, setDesc] = useState("");
+  const [count, setCount] = useState("");
+  const [category, setCategory] = useState("Others");
   const [image, setImage] = useState("");
 
   useEffect(() => {
@@ -53,8 +65,10 @@ export default function AdminPanel() {
   const openEditModal = (item: any) => {
     setEditId(item.id);
     setTitle(item.title);
-    setPrice(item.price.toString());
+    setPrice(item.price ? item.price.toString() : "");
     setDesc(item.desc || "");
+    setCount(item.count !== undefined ? item.count.toString() : "0");
+    setCategory(item.category || "Others");
     setImage(item.image || "");
     setEditVisible(true);
   };
@@ -66,6 +80,8 @@ export default function AdminPanel() {
         title,
         price: parseFloat(price),
         desc,
+        count: parseInt(count, 10) || 0,
+        category,
         image,
       });
       setEditVisible(false);
@@ -79,7 +95,6 @@ export default function AdminPanel() {
     if (selectedId) {
       try {
         const productRef = ref(db, `products/${selectedId}`);
-
         const reviewsRef = ref(db, `productReviews/${selectedId}`);
 
         await Promise.all([remove(productRef), remove(reviewsRef)]);
@@ -123,7 +138,11 @@ export default function AdminPanel() {
             <Image source={{ uri: item.image }} style={styles.image} />
             <View style={styles.info}>
               <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.categoryBadge}>
+                {item.category || "Others"}
+              </Text>
               <Text style={styles.price}>Rs. {item.price}</Text>
+              <Text style={styles.stock}>Stock: {item.count || 0}</Text>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
@@ -165,13 +184,53 @@ export default function AdminPanel() {
                 placeholderTextColor="#666"
               />
 
-              <Text style={styles.label}>Price (Rs.)</Text>
-              <TextInput
-                style={styles.input}
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="numeric"
-              />
+              <Text style={styles.label}>Category</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 15 }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[
+                      styles.categoryPill,
+                      category === cat && styles.categoryPillActive,
+                    ]}
+                    onPress={() => setCategory(cat)}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        category === cat && styles.categoryTextActive,
+                      ]}
+                    >
+                      {cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              <View style={styles.row}>
+                <View style={{ flex: 1, marginRight: 5 }}>
+                  <Text style={styles.label}>Price (Rs.)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={price}
+                    onChangeText={setPrice}
+                    keyboardType="numeric"
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: 5 }}>
+                  <Text style={styles.label}>Stock Count</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={count}
+                    onChangeText={setCount}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
 
               <Text style={styles.label}>Description</Text>
               <TextInput
@@ -242,10 +301,12 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 12,
   },
-  image: { width: 60, height: 60, borderRadius: 10, marginRight: 10 },
+  image: { width: 70, height: 70, borderRadius: 10, marginRight: 12 },
   info: { flex: 1 },
-  title: { color: "#fff", fontWeight: "500" },
-  price: { color: "#a78bfa", marginTop: 4 },
+  title: { color: "#fff", fontWeight: "500", fontSize: 15 },
+  categoryBadge: { color: "#888", fontSize: 12, marginTop: 2 },
+  price: { color: "#a78bfa", marginTop: 4, fontWeight: "bold" },
+  stock: { color: "#aaa", fontSize: 12, marginTop: 2 },
   actions: { flexDirection: "row", gap: 10 },
   iconBtn: { backgroundColor: "#222", padding: 8, borderRadius: 20 },
 
@@ -259,7 +320,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     padding: 20,
-    height: "80%",
+    height: "85%",
   },
   modalHeader: {
     flexDirection: "row",
@@ -267,7 +328,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: { color: "#fff", fontSize: 20, fontWeight: "bold" },
-  label: { color: "#888", marginBottom: 5, fontSize: 12 },
+  label: { color: "#888", marginBottom: 5, fontSize: 12, marginLeft: 4 },
   input: {
     backgroundColor: "#222",
     color: "#fff",
@@ -275,6 +336,22 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 15,
   },
+  row: { flexDirection: "row" },
+  categoryPill: {
+    backgroundColor: "#222",
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#333",
+  },
+  categoryPillActive: {
+    backgroundColor: "#a78bfa",
+    borderColor: "#a78bfa",
+  },
+  categoryText: { color: "#888", fontSize: 13 },
+  categoryTextActive: { color: "#fff", fontWeight: "bold" },
   previewBox: {
     height: 150,
     borderRadius: 12,
@@ -288,6 +365,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 25,
     alignItems: "center",
+    marginBottom: 20,
   },
   btnText: { color: "#fff", fontWeight: "bold" },
 });

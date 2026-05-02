@@ -19,21 +19,33 @@ export default function Login() {
   const router = useRouter();
 
   const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields.");
+      return;
+    }
+
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password,
       );
       const user = userCredential.user;
 
-      if (user.email === "your-admin-email@example.com") {
+      const ADMIN_EMAIL = "admin@gmail.com";
+
+      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         router.replace("/adminPanel");
       } else {
         router.replace("/home");
       }
-    } catch (error) {
-      Alert.alert("Login Failed", "Invalid credentials");
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === "auth/invalid-credential") {
+        Alert.alert("Login Failed", "Incorrect email or password.");
+      } else {
+        Alert.alert("Login Failed", "An unexpected error occurred.");
+      }
     }
   };
 
