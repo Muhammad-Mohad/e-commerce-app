@@ -12,9 +12,9 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useCartStore } from "../../src/store/cartStore";
+import { useCartStore } from "../src/store/cartStore";
 import { useEffect, useState } from "react";
-import { auth, db } from "../../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import { ref, onValue, set } from "firebase/database";
 
 export default function ProductDetail() {
@@ -140,10 +140,7 @@ export default function ProductDetail() {
           <Text style={styles.desc}>{product.desc}</Text>
 
           <TouchableOpacity
-            style={[
-              styles.button,
-              isOutOfStock && { backgroundColor: "#222" }, 
-            ]}
+            style={[styles.button, isOutOfStock && { backgroundColor: "#222" }]}
             disabled={isOutOfStock}
             onPress={() => {
               addToCart(product);

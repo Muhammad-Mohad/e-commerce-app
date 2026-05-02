@@ -9,8 +9,8 @@ import {
   Alert,
   FlatList,
 } from "react-native";
-import { useCartStore } from "../../src/store/cartStore";
-import { auth, db } from "../../firebaseConfig";
+import { useCartStore } from "../src/store/cartStore";
+import { auth, db } from "../firebaseConfig";
 import { ref, push, update, get } from "firebase/database";
 
 export default function Checkout() {

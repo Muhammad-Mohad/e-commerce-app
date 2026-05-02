@@ -66,10 +66,6 @@ export default function MainLayout() {
           ),
         }}
       />
-
-      <Tabs.Screen name="productDetail" options={{ href: null }} />
-
-      <Tabs.Screen name="checkout" options={{ href: null }} />
     </Tabs>
   );
 }
