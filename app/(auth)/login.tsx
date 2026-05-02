@@ -6,81 +6,151 @@ import {
 } from "firebase/auth";
 import React, { useState } from "react";
 import {
-  Alert,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
-import { auth } from "../.././firebaseConfig";
+import { auth } from "../../firebaseConfig";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success" as "success" | "error" | "info",
+  });
+
   const router = useRouter();
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    type: "success" | "error" | "info",
+  ) => {
+    setAlertConfig({ visible: true, title, message, type });
+
+    if (type !== "error") {
+      setTimeout(() => {
+        setAlertConfig((prev) => ({ ...prev, visible: false }));
+      }, 2000);
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
+      showCustomAlert("Missing Info", "Please fill in all fields.", "error");
       return;
     }
 
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         email.trim(),
         password,
       );
+
       const user = userCredential.user;
-
       const ADMIN_EMAIL = "admin@gmail.com";
+      const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
 
-      if (user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
-        router.replace("/adminPanel");
-      } else {
-        router.replace("/home");
-      }
+      setLoading(false);
+      showCustomAlert(
+        "Success",
+        isAdmin ? "Welcome back, Admin" : "Welcome to BONZO",
+        "success",
+      );
+
+      setTimeout(() => {
+        if (isAdmin) {
+          router.replace("/adminPanel");
+        } else {
+          router.replace("/home");
+        }
+      }, 1500);
     } catch (error: any) {
-      console.error(error);
+      setLoading(false);
       if (error.code === "auth/invalid-credential") {
-        Alert.alert("Login Failed", "Incorrect email or password.");
+        showCustomAlert(
+          "Login Failed",
+          "Incorrect email or password.",
+          "error",
+        );
       } else {
-        Alert.alert("Login Failed", "An unexpected error occurred.");
+        showCustomAlert("Error", "An unexpected error occurred.", "error");
       }
     }
   };
 
   const handleForgotPassword = async () => {
     if (!email) {
-      Alert.alert(
-        "Reset Password",
-        "Please enter your email address in the field above first.",
+      showCustomAlert(
+        "Email Required",
+        "Please enter your email address first.",
+        "info",
       );
       return;
     }
-
     try {
       await sendPasswordResetEmail(auth, email.trim());
-      Alert.alert(
+      showCustomAlert(
         "Email Sent",
-        "A password reset link has been sent to your email address.",
+        "Check your inbox for reset instructions.",
+        "success",
       );
     } catch (error: any) {
-      console.error(error);
-      if (error.code === "auth/user-not-found") {
-        Alert.alert("Error", "No account found with this email.");
-      } else if (error.code === "auth/invalid-email") {
-        Alert.alert("Error", "Please enter a valid email address.");
-      } else {
-        Alert.alert("Error", "Failed to send reset email. Try again later.");
-      }
+      showCustomAlert("Reset Failed", "Failed to send reset email.", "error");
     }
   };
 
   return (
     <View style={styles.container}>
+      <Modal transparent visible={alertConfig.visible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.alertCard}>
+            <Ionicons
+              name={
+                alertConfig.type === "success"
+                  ? "checkmark-circle"
+                  : alertConfig.type === "error"
+                    ? "alert-circle"
+                    : "information-circle"
+              }
+              size={70}
+              color={
+                alertConfig.type === "success"
+                  ? "#4ade80"
+                  : alertConfig.type === "error"
+                    ? "#ff4d4d"
+                    : "#a78bfa"
+              }
+            />
+            <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertSub}>{alertConfig.message}</Text>
+
+            {alertConfig.type === "error" && (
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() =>
+                  setAlertConfig({ ...alertConfig, visible: false })
+                }
+              >
+                <Text style={styles.closeBtnText}>GOT IT</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       <View style={styles.glowTop} />
       <View style={styles.glowBottom} />
 
@@ -128,8 +198,16 @@ export default function Login() {
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>SIGN IN</Text>
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>SIGN IN</Text>
+          )}
         </TouchableOpacity>
 
         <Link href="/signup" style={styles.link}>
@@ -146,6 +224,48 @@ const styles = StyleSheet.create({
     backgroundColor: "#0a0a0f",
     justifyContent: "center",
     paddingHorizontal: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertCard: {
+    backgroundColor: "#111",
+    padding: 30,
+    borderRadius: 25,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#222",
+    width: "80%",
+  },
+  alertTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 15,
+    fontFamily: "Rosemary",
+  },
+  alertSub: {
+    color: "#888",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
+    fontFamily: "Rosemary",
+    lineHeight: 20,
+  },
+  closeBtn: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    backgroundColor: "#222",
+    borderRadius: 20,
+  },
+  closeBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   glowTop: {
     position: "absolute",
@@ -217,10 +337,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 30,
     alignItems: "center",
-    shadowColor: "#6750a4",
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 5,
   },
   buttonText: {
     color: "#fff",

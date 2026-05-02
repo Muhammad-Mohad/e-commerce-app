@@ -5,7 +5,6 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import React, { useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,35 +13,68 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
+  ActivityIndicator,
 } from "react-native";
-import { auth, db } from "../.././firebaseConfig";
+import { auth, db } from "../../firebaseConfig";
 
 export default function Signup() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success" as "success" | "error",
+  });
+
   const router = useRouter();
+
+  const showCustomAlert = (
+    title: string,
+    message: string,
+    type: "success" | "error",
+  ) => {
+    setAlertConfig({ visible: true, title, message, type });
+
+    if (type === "success") {
+      setTimeout(() => {
+        setAlertConfig((prev) => ({ ...prev, visible: false }));
+      }, 1500);
+    }
+  };
 
   const handleSignup = async () => {
     if (!username || !email || !password || !confirmPassword) {
-      Alert.alert("Error", "Please fill in all fields");
+      showCustomAlert(
+        "Missing Fields",
+        "Please fill in all fields to create your account.",
+        "error",
+      );
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords do not match");
+      showCustomAlert(
+        "Password Mismatch",
+        "Passwords do not match. Please check again.",
+        "error",
+      );
       return;
     }
 
+    setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password,
       );
       const user = userCredential.user;
@@ -55,9 +87,15 @@ export default function Signup() {
 
       await AsyncStorage.setItem("user_username", username);
 
-      router.replace("/home");
+      setLoading(false);
+      showCustomAlert("Welcome!", "Account created successfully.", "success");
+
+      setTimeout(() => {
+        router.replace("/home");
+      }, 1500);
     } catch (error: any) {
-      Alert.alert("Signup Error", error.message);
+      setLoading(false);
+      showCustomAlert("Signup Failed", error.message, "error");
     }
   };
 
@@ -66,6 +104,35 @@ export default function Signup() {
       behavior={Platform.OS === "android" ? "padding" : "height"}
       style={styles.container}
     >
+      <Modal transparent visible={alertConfig.visible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.alertCard}>
+            <Ionicons
+              name={
+                alertConfig.type === "success"
+                  ? "checkmark-circle"
+                  : "alert-circle"
+              }
+              size={70}
+              color={alertConfig.type === "success" ? "#4ade80" : "#ff4d4d"}
+            />
+            <Text style={styles.alertTitle}>{alertConfig.title}</Text>
+            <Text style={styles.alertSub}>{alertConfig.message}</Text>
+
+            {alertConfig.type === "error" && (
+              <TouchableOpacity
+                style={styles.closeBtn}
+                onPress={() =>
+                  setAlertConfig({ ...alertConfig, visible: false })
+                }
+              >
+                <Text style={styles.closeBtnText}>TRY AGAIN</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
@@ -102,7 +169,10 @@ export default function Signup() {
               placeholder="Password"
               placeholderTextColor="#888"
               secureTextEntry={!showPassword}
-              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              style={[
+                styles.input,
+                { flex: 1, marginBottom: 0, borderBottomWidth: 0 },
+              ]}
               value={password}
               onChangeText={setPassword}
             />
@@ -123,7 +193,10 @@ export default function Signup() {
               placeholder="Confirm Password"
               placeholderTextColor="#888"
               secureTextEntry={!showConfirmPassword}
-              style={[styles.input, { flex: 1, marginBottom: 0 }]}
+              style={[
+                styles.input,
+                { flex: 1, marginBottom: 0, borderBottomWidth: 0 },
+              ]}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
@@ -139,8 +212,16 @@ export default function Signup() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleSignup}>
-            <Text style={styles.buttonText}>SIGN UP</Text>
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.7 }]}
+            onPress={handleSignup}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>SIGN UP</Text>
+            )}
           </TouchableOpacity>
 
           <Link href="/login" style={styles.link}>
@@ -162,6 +243,49 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
     paddingBottom: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertCard: {
+    backgroundColor: "#111",
+    padding: 30,
+    borderRadius: 25,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#222",
+    width: "80%",
+  },
+  alertTitle: {
+    color: "#fff",
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 15,
+    fontFamily: "Rosemary",
+  },
+  alertSub: {
+    color: "#888",
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: "center",
+    fontFamily: "Rosemary",
+    lineHeight: 20,
+  },
+  closeBtn: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    backgroundColor: "#222",
+    borderRadius: 20,
+  },
+  closeBtnText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+    fontFamily: "Rosemary",
   },
   glowTop: {
     position: "absolute",
@@ -228,7 +352,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: "center",
     marginTop: 10,
-    elevation: 5,
   },
   buttonText: {
     color: "#fff",
