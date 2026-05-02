@@ -94,7 +94,7 @@ export default function ProductDetail() {
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "android" ? "padding" : undefined}
     >
       <ScrollView
         style={styles.container}

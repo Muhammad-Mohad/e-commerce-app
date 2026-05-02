@@ -63,7 +63,7 @@ export default function Signup() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      behavior={Platform.OS === "android" ? "padding" : "height"}
       style={styles.container}
     >
       <ScrollView
