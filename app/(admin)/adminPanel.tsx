@@ -12,6 +12,7 @@ import {
   Modal,
   TextInput,
   ScrollView,
+  Platform,
 } from "react-native";
 import DeleteModal from "../../src/components/DeleteModal";
 
@@ -43,6 +44,21 @@ export default function AdminPanel() {
   const [count, setCount] = useState("");
   const [category, setCategory] = useState("Others");
   const [image, setImage] = useState("");
+
+  const totalProducts = products.length;
+  const totalStockValue = products.reduce(
+    (acc, curr) =>
+      acc + (parseFloat(curr.price) || 0) * (parseInt(curr.count) || 0),
+    0,
+  );
+
+  const outOfStockItems = products.filter(
+    (p) => (parseInt(p.count) || 0) === 0,
+  ).length;
+  const lowStockItems = products.filter((p) => {
+    const stock = parseInt(p.count) || 0;
+    return stock > 0 && stock < 5;
+  }).length;
 
   useEffect(() => {
     const productsRef = ref(db, "products");
@@ -96,22 +112,70 @@ export default function AdminPanel() {
       try {
         const productRef = ref(db, `products/${selectedId}`);
         const reviewsRef = ref(db, `productReviews/${selectedId}`);
-
         await Promise.all([remove(productRef), remove(reviewsRef)]);
-
         setDelVisible(false);
         setSelectedId(null);
-
         Alert.alert(
           "Success",
           "Product and all related reviews have been removed.",
         );
       } catch (error) {
-        console.error("Delete Error:", error);
         Alert.alert("Error", "Something went wrong while deleting.");
       }
     }
   };
+
+  const AnalyticsHeader = () => (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={styles.logo}>∞</Text>
+      <Text style={styles.brand}>BONZO</Text>
+
+      <Text style={styles.section}>Inventory Overview</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.analyticsRow}
+      >
+        <View style={styles.statCard}>
+          <Ionicons name="cube-outline" size={20} color="#a78bfa" />
+          <Text style={styles.statValue}>{totalProducts}</Text>
+          <Text style={styles.statLabel}>Items</Text>
+        </View>
+
+        <View style={styles.statCard}>
+          <Ionicons name="wallet-outline" size={20} color="#4ade80" />
+          <Text style={styles.statValue}>
+            Rs. {totalStockValue.toLocaleString()}
+          </Text>
+          <Text style={styles.statLabel}>Stock Value</Text>
+        </View>
+
+        <View
+          style={[
+            styles.statCard,
+            outOfStockItems > 0 && { borderColor: "#ff4d4d" },
+          ]}
+        >
+          <Ionicons name="alert-circle-outline" size={20} color="#ff4d4d" />
+          <Text style={styles.statValue}>{outOfStockItems}</Text>
+          <Text style={styles.statLabel}>Out of Stock</Text>
+        </View>
+
+        <View
+          style={[
+            styles.statCard,
+            lowStockItems > 0 && { borderColor: "#fbbf24" },
+          ]}
+        >
+          <Ionicons name="trending-down-outline" size={20} color="#fbbf24" />
+          <Text style={styles.statValue}>{lowStockItems}</Text>
+          <Text style={styles.statLabel}>Low Stock</Text>
+        </View>
+      </ScrollView>
+
+      <Text style={[styles.section, { marginTop: 10 }]}>Your Products</Text>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -126,43 +190,57 @@ export default function AdminPanel() {
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={
-          <>
-            <Text style={styles.logo}>∞</Text>
-            <Text style={styles.brand}>BONZO</Text>
-            <Text style={styles.section}>Your Products</Text>
-          </>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Image source={{ uri: item.image }} style={styles.image} />
-            <View style={styles.info}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.categoryBadge}>
-                {item.category || "Others"}
-              </Text>
-              <Text style={styles.price}>Rs. {item.price}</Text>
-              <Text style={styles.stock}>Stock: {item.count || 0}</Text>
+        ListHeaderComponent={AnalyticsHeader}
+        renderItem={({ item }) => {
+          const stock = parseInt(item.count) || 0;
+          const isOutOfStock = stock === 0;
+          const isLowStock = stock > 0 && stock < 5;
+
+          return (
+            <View
+              style={[
+                styles.card,
+                isOutOfStock && { borderColor: "#ff4d4d44", borderWidth: 1 },
+                isLowStock && { borderColor: "#fbbf2444", borderWidth: 1 },
+              ]}
+            >
+              <Image source={{ uri: item.image }} style={styles.image} />
+              <View style={styles.info}>
+                <Text style={styles.title}>{item.title}</Text>
+                <Text style={styles.categoryBadge}>
+                  {item.category || "Others"}
+                </Text>
+                <Text style={styles.price}>Rs. {item.price}</Text>
+                <Text
+                  style={[
+                    styles.stock,
+                    isOutOfStock && { color: "#ff4d4d", fontWeight: "bold" },
+                    isLowStock && { color: "#fbbf24", fontWeight: "bold" },
+                  ]}
+                >
+                  Stock: {stock}
+                </Text>
+              </View>
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => openEditModal(item)}
+                >
+                  <Ionicons name="create-outline" size={18} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => {
+                    setSelectedId(item.id);
+                    setDelVisible(true);
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#ff4d4d" />
+                </TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => openEditModal(item)}
-              >
-                <Ionicons name="create-outline" size={18} color="#fff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconBtn}
-                onPress={() => {
-                  setSelectedId(item.id);
-                  setDelVisible(true);
-                }}
-              >
-                <Ionicons name="trash-outline" size={18} color="#ff4d4d" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+          );
+        }}
       />
 
       <Modal visible={editVisible} animationType="slide" transparent={true}>
@@ -175,7 +253,7 @@ export default function AdminPanel() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.label}>Product Title</Text>
               <TextInput
                 style={styles.input}
@@ -282,7 +360,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     color: "#a78bfa",
     textAlign: "center",
-    fontFamily: "Rosemary",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
   },
   brand: {
     color: "#fff",
@@ -290,9 +368,23 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: "Rosemary",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
   },
-  section: { color: "#fff", marginBottom: 10, fontSize: 16 },
+  section: { color: "#fff", marginBottom: 10, fontSize: 16, fontWeight: "600" },
+
+  analyticsRow: { flexDirection: "row", marginBottom: 20 },
+  statCard: {
+    backgroundColor: "#161622",
+    padding: 15,
+    borderRadius: 16,
+    marginRight: 10,
+    minWidth: 120,
+    borderWidth: 1,
+    borderColor: "#222",
+  },
+  statValue: { color: "#fff", fontSize: 18, fontWeight: "bold", marginTop: 5 },
+  statLabel: { color: "#888", fontSize: 12 },
+
   card: {
     flexDirection: "row",
     alignItems: "center",
