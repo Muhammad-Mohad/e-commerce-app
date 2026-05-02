@@ -27,7 +27,7 @@ export function OrderCard({
         </Text>
       </View>
       <View style={styles.right}>
-        <Text style={styles.total}>${order.total?.toFixed(2)}</Text>
+        <Text style={styles.total}>Rs. {order.total?.toFixed(2)}</Text>
         <Ionicons name="chevron-forward" size={18} color="#a78bfa" />
       </View>
     </TouchableOpacity>
@@ -68,7 +68,7 @@ export function OrderDetailModal({
               <View style={styles.pItem}>
                 <Text style={styles.pName}>{item.title}</Text>
                 <Text style={styles.pQty}>
-                  {item.quantity} x ${item.price}
+                  {item.quantity} x Rs. {item.price}
                 </Text>
               </View>
             )}

@@ -38,6 +38,26 @@ export default function AdminLayout() {
       />
 
       <Tabs.Screen
+        name="adminOrders"
+        options={{
+          title: "Orders",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="receipt" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="adminAccounts"
+        options={{
+          title: "Accounts",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="people" size={22} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="adminProfile"
         options={{
           title: "Profile",

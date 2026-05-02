@@ -101,7 +101,6 @@ export default function Home() {
               item={item}
               quantity={currentQty}
               onAdd={() => {
-                // Stock check logic
                 if (currentQty < stockAvailable) {
                   addToCart(item);
                 } else {

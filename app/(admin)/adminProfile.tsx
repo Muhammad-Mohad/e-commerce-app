@@ -123,14 +123,6 @@ export default function AdminProfile() {
           </View>
         )}
       </View>
-
-      <TouchableOpacity
-        style={styles.manageBtn}
-        onPress={() => router.push("/adminPanel")}
-      >
-        <Text style={styles.manageBtnText}>MANAGE INVENTORY</Text>
-        <Ionicons name="arrow-forward" size={18} color="#fff" />
-      </TouchableOpacity>
     </View>
   );
 }
@@ -228,20 +220,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textTransform: "uppercase",
     marginTop: 2,
-  },
-  manageBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#6750a4",
-    marginTop: 25,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 15,
-    gap: 10,
-  },
-  manageBtnText: {
-    color: "#fff",
-    fontWeight: "bold",
-    letterSpacing: 1,
   },
 });

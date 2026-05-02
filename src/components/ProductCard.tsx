@@ -68,7 +68,7 @@ export default function ProductCard({
       <Text style={styles.desc}>{item.desc}</Text>
 
       <View style={styles.footer}>
-        <Text style={styles.price}>${item.price}</Text>
+        <Text style={styles.price}>Rs. {item.price}</Text>
 
         {variant === "default" ? (
           <TouchableOpacity
