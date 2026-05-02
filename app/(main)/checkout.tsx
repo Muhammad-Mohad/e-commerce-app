@@ -1,38 +1,24 @@
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  FlatList,
-  KeyboardTypeOptions,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
   Alert,
+  FlatList,
 } from "react-native";
 import { useCartStore } from "../../src/store/cartStore";
-
 import { auth, db } from "../../firebaseConfig";
-import { ref, push, set } from "firebase/database";
-
-type FormType = {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  address: string;
-  email: string;
-};
-
-type ErrorsType = Partial<FormType> & {
-  payment?: string;
-};
+import { ref, push, update, get } from "firebase/database";
 
 export default function Checkout() {
   const router = useRouter();
   const items = useCartStore((s: any) => s.items);
-  const clearCart = useCartStore((s: any) => s.clearCart); 
+  const clearCart = useCartStore((s: any) => s.clearCart);
 
-  const [form, setForm] = useState<FormType>({
+  const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     phone: "",
@@ -41,8 +27,8 @@ export default function Checkout() {
   });
 
   const [payment, setPayment] = useState<"cash" | "card" | null>(null);
-  const [errors, setErrors] = useState<ErrorsType>({});
-  const [isSubmitting, setIsSubmitting] = useState(false); 
+  const [errors, setErrors] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const total = items.reduce(
     (sum: number, i: any) => sum + i.price * i.quantity,
@@ -50,8 +36,7 @@ export default function Checkout() {
   );
 
   const validate = () => {
-    const err: ErrorsType = {};
-
+    const err: any = {};
     if (!form.firstName.trim()) err.firstName = "Required";
     if (!form.lastName.trim()) err.lastName = "Required";
     if (!/^\d{11}$/.test(form.phone)) err.phone = "Phone must be 11 digits";
@@ -59,7 +44,6 @@ export default function Checkout() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
       err.email = "Invalid email";
     if (!payment) err.payment = "Select payment method";
-
     setErrors(err);
     return Object.keys(err).length === 0;
   };
@@ -69,32 +53,48 @@ export default function Checkout() {
 
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert("Authentication Error", "You must be logged in to place an order.");
+      Alert.alert("Error", "You must be logged in.");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      const updates: any = {};
+      const orderId = push(ref(db, `users/${user.uid}/orders`)).key;
+
       const orderData = {
         customerDetails: form,
         paymentMethod: payment,
-        products: items, 
+        products: items,
         orderTotal: total,
         status: "Pending",
         orderDate: new Date().toISOString(),
       };
 
-      const ordersRef = ref(db, `users/${user.uid}/orders`);
-      
-      const newOrderRef = push(ordersRef);
-      
-      await set(newOrderRef, orderData);
+      updates[`users/${user.uid}/orders/${orderId}`] = orderData;
 
-      if (clearCart) clearCart(); 
-      Alert.alert("Success", "Your order has been placed successfully!");
-      router.replace("/home"); 
+      for (const item of items) {
+        const productRef = ref(db, `products/${item.id}`);
+        const snapshot = await get(productRef);
 
+        if (snapshot.exists()) {
+          const currentStock = snapshot.val().count || 0;
+          const newStock = currentStock - item.quantity;
+
+          if (newStock < 0) {
+            throw new Error(`Insufficient stock for ${item.title}`);
+          }
+
+          updates[`products/${item.id}/count`] = newStock;
+        }
+      }
+
+      await update(ref(db), updates);
+
+      if (clearCart) clearCart();
+      Alert.alert("Success", "Order placed and stock updated!");
+      router.replace("/home");
     } catch (error: any) {
       Alert.alert("Checkout Error", error.message);
     } finally {
@@ -107,111 +107,97 @@ export default function Checkout() {
       <Text style={styles.logo}>∞</Text>
       <Text style={styles.brand}>BONZO</Text>
 
-      <Text style={styles.section}>Your Details</Text>
-
-      <Input
-        placeholder="First Name"
-        value={form.firstName}
-        onChangeText={(v) => setForm({ ...form, firstName: v })}
-        error={errors.firstName}
-      />
-      <Input
-        placeholder="Last Name"
-        value={form.lastName}
-        onChangeText={(v) => setForm({ ...form, lastName: v })}
-        error={errors.lastName}
-      />
-
-      <Input
-        placeholder="Phone (11 digits)"
-        value={form.phone}
-        keyboardType="numeric"
-        onChangeText={(v) => setForm({ ...form, phone: v })}
-        error={errors.phone}
-      />
-
-      <Input
-        placeholder="Address"
-        value={form.address}
-        onChangeText={(v) => setForm({ ...form, address: v })}
-        error={errors.address}
-      />
-
-      <Input
-        placeholder="Email"
-        value={form.email}
-        keyboardType="email-address"
-        onChangeText={(v) => setForm({ ...form, email: v })}
-        error={errors.email}
-      />
-
-      <Text style={styles.section}>Payment Method</Text>
-
-      <View style={styles.paymentRow}>
-        <TouchableOpacity
-          style={styles.paymentOption}
-          onPress={() => setPayment("cash")}
-        >
-          <View style={styles.radio}>
-            {payment === "cash" && <View style={styles.radioFill} />}
-          </View>
-          <Text style={styles.paymentText}>Cash on Delivery</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.paymentOption}
-          onPress={() => setPayment("card")}
-        >
-          <View style={styles.radio}>
-            {payment === "card" && <View style={styles.radioFill} />}
-          </View>
-          <Text style={styles.paymentText}>Card Payment</Text>
-        </TouchableOpacity>
-      </View>
-
-      {errors.payment && <Text style={styles.error}>{errors.payment}</Text>}
-
-      <Text style={styles.section}>Your Order</Text>
-
       <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        scrollEnabled={false}
-        renderItem={({ item }) => (
-          <View style={styles.itemRow}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
-            <Text style={styles.itemMeta}>
-              {item.quantity} x ${item.price}
-            </Text>
-          </View>
-        )}
+        data={[]}
+        renderItem={null}
+        ListHeaderComponent={
+          <>
+            <Text style={styles.section}>Your Details</Text>
+            <Input
+              placeholder="First Name"
+              value={form.firstName}
+              onChangeText={(v: string) => setForm({ ...form, firstName: v })}
+              error={errors.firstName}
+            />
+            <Input
+              placeholder="Last Name"
+              value={form.lastName}
+              onChangeText={(v: string) => setForm({ ...form, lastName: v })}
+              error={errors.lastName}
+            />
+            <Input
+              placeholder="Phone (11 digits)"
+              value={form.phone}
+              keyboardType="numeric"
+              onChangeText={(v: string) => setForm({ ...form, phone: v })}
+              error={errors.phone}
+            />
+            <Input
+              placeholder="Address"
+              value={form.address}
+              onChangeText={(v: string) => setForm({ ...form, address: v })}
+              error={errors.address}
+            />
+            <Input
+              placeholder="Email"
+              value={form.email}
+              keyboardType="email-address"
+              onChangeText={(v: string) => setForm({ ...form, email: v })}
+              error={errors.email}
+            />
+
+            <Text style={styles.section}>Payment Method</Text>
+            <View style={styles.paymentRow}>
+              <TouchableOpacity
+                style={styles.paymentOption}
+                onPress={() => setPayment("cash")}
+              >
+                <View style={styles.radio}>
+                  {payment === "cash" && <View style={styles.radioFill} />}
+                </View>
+                <Text style={styles.paymentText}>Cash on Delivery</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.paymentOption}
+                onPress={() => setPayment("card")}
+              >
+                <View style={styles.radio}>
+                  {payment === "card" && <View style={styles.radioFill} />}
+                </View>
+                <Text style={styles.paymentText}>Card Payment</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.section}>Your Order</Text>
+            {items.map((item: any) => (
+              <View key={item.id} style={styles.itemRow}>
+                <Text style={styles.itemTitle}>{item.title}</Text>
+                <Text style={styles.itemMeta}>
+                  {item.quantity} x ${item.price}
+                </Text>
+              </View>
+            ))}
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.total}>${total.toFixed(2)}</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.button, isSubmitting && { opacity: 0.7 }]}
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.btnText}>
+                {isSubmitting ? "PROCESSING..." : "PLACE ORDER"}
+              </Text>
+            </TouchableOpacity>
+          </>
+        }
       />
-
-      <View style={styles.totalRow}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.total}>${total.toFixed(2)}</Text>
-      </View>
-
-      <TouchableOpacity 
-        style={[styles.button, isSubmitting && { opacity: 0.7 }]} 
-        onPress={handleSubmit}
-        disabled={isSubmitting}
-      >
-        <Text style={styles.btnText}>
-          {isSubmitting ? "PROCESSING..." : "PLACE ORDER"}
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 }
-
-type InputProps = {
-  placeholder: string;
-  value: string;
-  onChangeText: (text: string) => void;
-  error?: string;
-  keyboardType?: KeyboardTypeOptions;
-};
 
 function Input({
   placeholder,
@@ -219,7 +205,7 @@ function Input({
   onChangeText,
   error,
   keyboardType = "default",
-}: InputProps) {
+}: any) {
   return (
     <View style={{ marginBottom: 12 }}>
       <TextInput
