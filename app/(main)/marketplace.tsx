@@ -16,7 +16,16 @@ import { useCartStore } from "../../src/store/cartStore";
 import { db } from "../../firebaseConfig";
 import { ref, onValue } from "firebase/database";
 
-const CATEGORIES = ["All", "Vases", "Sofas", "Tables", "Beds", "Wall Arts", "Chairs", "Others"];
+const CATEGORIES = [
+  "All",
+  "Vases",
+  "Sofas",
+  "Tables",
+  "Beds",
+  "Wall Arts",
+  "Chairs",
+  "Others",
+];
 
 export default function Marketplace() {
   const addToCart = useCartStore((s: any) => s.addToCart);
@@ -51,7 +60,7 @@ export default function Marketplace() {
       (error) => {
         console.error("Failed to fetch products:", error);
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();
@@ -69,7 +78,9 @@ export default function Marketplace() {
     const matchesMinPrice = minPrice === "" || price >= parseFloat(minPrice);
     const matchesMaxPrice = maxPrice === "" || price <= parseFloat(maxPrice);
 
-    return matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice;
+    return (
+      matchesSearch && matchesCategory && matchesMinPrice && matchesMaxPrice
+    );
   });
 
   const getQty = (id: string) => {
@@ -90,7 +101,12 @@ export default function Marketplace() {
       <Text style={styles.title}>Marketplace</Text>
 
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={20}
+          color="#666"
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchBar}
           placeholder="Search products..."
@@ -129,7 +145,6 @@ export default function Marketplace() {
         </ScrollView>
       </View>
 
-      {/* 4. Price Range Filters */}
       <View style={styles.priceRangeRow}>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -152,8 +167,11 @@ export default function Marketplace() {
           />
         </View>
         {(minPrice !== "" || maxPrice !== "") && (
-          <TouchableOpacity 
-            onPress={() => { setMinPrice(""); setMaxPrice(""); }}
+          <TouchableOpacity
+            onPress={() => {
+              setMinPrice("");
+              setMaxPrice("");
+            }}
             style={styles.clearBtn}
           >
             <Text style={styles.clearBtnText}>Clear</Text>
@@ -171,20 +189,31 @@ export default function Marketplace() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              {searchQuery 
+              {searchQuery
                 ? `No results found for "${searchQuery}"`
                 : "No products found in this range."}
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <ProductCard
-            item={item}
-            quantity={getQty(item.id)}
-            onAdd={() => addToCart(item)}
-            variant="default"
-          />
-        )}
+        renderItem={({ item }) => {
+          const currentQty = getQty(item.id);
+          const stockAvailable = item.count || 0; 
+
+          return (
+            <ProductCard
+              item={item}
+              quantity={currentQty}
+              onAdd={() => {
+                if (currentQty < stockAvailable) {
+                  addToCart(item);
+                } else {
+                  alert(`Sorry, only ${stockAvailable} in stock!`);
+                }
+              }}
+              variant="default"
+            />
+          );
+        }}
       />
     </View>
   );
@@ -195,15 +224,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#0a0a0f",
     paddingHorizontal: 16,
-    paddingTop: 50, 
+    paddingTop: 50,
   },
-  title: { 
-    color: "#fff", 
-    fontSize: 28, 
-    fontWeight: "bold", 
-    marginBottom: 20 
+  title: {
+    color: "#fff",
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
-  
+
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -223,7 +252,7 @@ const styles = StyleSheet.create({
   },
 
   row: { justifyContent: "space-between" },
-  
+
   filterScroll: { marginBottom: 15 },
   filterContent: { paddingRight: 20 },
   pill: {

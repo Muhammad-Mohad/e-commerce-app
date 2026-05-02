@@ -18,8 +18,15 @@ export default function Home() {
   const router = useRouter();
   const addToCart = useCartStore((state: any) => state.addToCart);
 
+  const items = useCartStore((state: any) => state.items);
+
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getQty = (id: string) => {
+    const found = items.find((i: any) => i.id === id);
+    return found ? found.quantity : 0;
+  };
 
   useEffect(() => {
     const productsQuery = query(ref(db, "products"), limitToFirst(4));
@@ -85,9 +92,26 @@ export default function Home() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <ProductCard item={item} onAdd={() => addToCart(item)} />
-        )}
+        renderItem={({ item }) => {
+          const currentQty = getQty(item.id);
+          const stockAvailable = item.count || 0;
+
+          return (
+            <ProductCard
+              item={item}
+              quantity={currentQty}
+              onAdd={() => {
+                // Stock check logic
+                if (currentQty < stockAvailable) {
+                  addToCart(item);
+                } else {
+                  alert("Maximum stock reached!");
+                }
+              }}
+              variant="default"
+            />
+          );
+        }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       />

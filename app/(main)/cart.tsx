@@ -1,18 +1,18 @@
+import React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   FlatList,
   Image,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  StyleSheet,
 } from "react-native";
 import { useCartStore } from "../../src/store/cartStore";
 
 export default function Cart() {
   const router = useRouter();
-
   const items = useCartStore((s: any) => s.items);
   const removeFromCart = useCartStore((s: any) => s.removeFromCart);
   const increaseQty = useCartStore((s: any) => s.increaseQty);
@@ -65,7 +65,6 @@ export default function Cart() {
             <View style={styles.content}>
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.price}>${item.price}</Text>
-              <Text style={styles.desc}>{item.desc}</Text>
 
               <View style={styles.qty}>
                 <TouchableOpacity
@@ -79,9 +78,17 @@ export default function Cart() {
 
                 <TouchableOpacity
                   style={styles.qtyBtn}
-                  onPress={() => increaseQty(item.id)}
+                  onPress={() =>
+                    item.quantity < (item.count || 0)
+                      ? increaseQty(item.id)
+                      : alert("No more stock!")
+                  }
                 >
-                  <Ionicons name="add" size={16} color="#fff" />
+                  <Ionicons
+                    name="add"
+                    size={16}
+                    color={item.quantity < (item.count || 0) ? "#fff" : "#444"}
+                  />
                 </TouchableOpacity>
               </View>
             </View>
@@ -94,7 +101,6 @@ export default function Cart() {
           <Text style={styles.totalLabel}>Total</Text>
           <Text style={styles.total}>${total.toFixed(2)}</Text>
         </View>
-
         <TouchableOpacity
           style={styles.checkout}
           onPress={() => router.push("/checkout")}
