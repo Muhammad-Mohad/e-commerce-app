@@ -1,6 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import React, { useState } from "react";
 import {
   Alert,
@@ -45,6 +48,33 @@ export default function Login() {
         Alert.alert("Login Failed", "Incorrect email or password.");
       } else {
         Alert.alert("Login Failed", "An unexpected error occurred.");
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert(
+        "Reset Password",
+        "Please enter your email address in the field above first.",
+      );
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      Alert.alert(
+        "Email Sent",
+        "A password reset link has been sent to your email address.",
+      );
+    } catch (error: any) {
+      console.error(error);
+      if (error.code === "auth/user-not-found") {
+        Alert.alert("Error", "No account found with this email.");
+      } else if (error.code === "auth/invalid-email") {
+        Alert.alert("Error", "Please enter a valid email address.");
+      } else {
+        Alert.alert("Error", "Failed to send reset email. Try again later.");
       }
     }
   };
@@ -94,7 +124,7 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleForgotPassword}>
           <Text style={styles.forgot}>Forgot Password?</Text>
         </TouchableOpacity>
 

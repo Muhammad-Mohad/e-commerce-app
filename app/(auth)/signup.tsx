@@ -55,7 +55,7 @@ export default function Signup() {
 
       await AsyncStorage.setItem("user_username", username);
 
-      router.replace("/adminPanel");
+      router.replace("/home");
     } catch (error: any) {
       Alert.alert("Signup Error", error.message);
     }

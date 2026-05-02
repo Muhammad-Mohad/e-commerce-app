@@ -25,10 +25,19 @@ export default function ProductDetail() {
   const addToCart = useCartStore((s: any) => s.addToCart);
 
   const [reviewText, setReviewText] = useState("");
+  const [rating, setRating] = useState(0);
   const [allReviews, setAllReviews] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
 
   const isOutOfStock = product?.count <= 0;
+
+  const averageRating =
+    allReviews.length > 0
+      ? (
+          allReviews.reduce((acc, curr) => acc + (curr.rating || 0), 0) /
+          allReviews.length
+        ).toFixed(1)
+      : "0.0";
 
   useEffect(() => {
     if (!product?.id) return;
@@ -44,6 +53,7 @@ export default function ProductDetail() {
         const userReview = data[auth.currentUser?.uid || ""];
         if (userReview) {
           setReviewText(userReview.comment);
+          setRating(userReview.rating || 0);
           setIsEditing(true);
         }
       } else {
@@ -58,6 +68,10 @@ export default function ProductDetail() {
     const user = auth.currentUser;
     if (!user) {
       Alert.alert("Error", "You must be logged in to review.");
+      return;
+    }
+    if (rating === 0) {
+      Alert.alert("Error", "Please select a star rating.");
       return;
     }
     if (!reviewText.trim()) {
@@ -75,6 +89,7 @@ export default function ProductDetail() {
           await set(ref(db, `productReviews/${product.id}/${user.uid}`), {
             username: username,
             comment: reviewText,
+            rating: rating,
             timestamp: Date.now(),
           });
           Alert.alert(
@@ -88,6 +103,30 @@ export default function ProductDetail() {
       Alert.alert("Error", "Failed to save review.");
     }
   };
+
+  const RenderStars = ({
+    count,
+    onSelect,
+    size = 16,
+    interactive = false,
+  }: any) => (
+    <View style={styles.starRow}>
+      {[1, 2, 3, 4, 5].map((num) => (
+        <TouchableOpacity
+          key={num}
+          disabled={!interactive}
+          onPress={() => onSelect && onSelect(num)}
+        >
+          <Ionicons
+            name={num <= count ? "star" : "star-outline"}
+            size={size}
+            color={num <= count ? "#FFD700" : "#444"}
+            style={{ marginRight: 2 }}
+          />
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 
   if (!product) return null;
 
@@ -158,9 +197,25 @@ export default function ProductDetail() {
           </TouchableOpacity>
 
           <View style={styles.reviewSection}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
+            <View style={styles.reviewTitleRow}>
+              <Text style={styles.sectionTitle}>Reviews</Text>
+              <View style={styles.avgContainer}>
+                <Ionicons name="star" size={14} color="#FFD700" />
+                <Text style={styles.avgText}>
+                  {averageRating} ({allReviews.length})
+                </Text>
+              </View>
+            </View>
 
             <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Tap to Rate:</Text>
+              <RenderStars
+                count={rating}
+                onSelect={setRating}
+                size={24}
+                interactive={true}
+              />
+
               <TextInput
                 style={styles.input}
                 placeholder="Write a review..."
@@ -182,7 +237,10 @@ export default function ProductDetail() {
             {allReviews.length > 0 ? (
               allReviews.map((rev) => (
                 <View key={rev.userId} style={styles.reviewItem}>
-                  <Text style={styles.reviewUser}>{rev.username}</Text>
+                  <View style={styles.revHeader}>
+                    <Text style={styles.reviewUser}>{rev.username}</Text>
+                    <RenderStars count={rev.rating} size={12} />
+                  </View>
                   <Text style={styles.reviewComment}>{rev.comment}</Text>
                 </View>
               ))
@@ -249,18 +307,30 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+
   reviewSection: {
     marginTop: 35,
     borderTopWidth: 1,
     borderTopColor: "#1e1e2e",
     paddingTop: 20,
   },
-  sectionTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
+  reviewTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
+  sectionTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  avgContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#161622",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  avgText: { color: "#fff", fontSize: 13, fontWeight: "bold", marginLeft: 5 },
+
   inputContainer: {
     backgroundColor: "#161622",
     borderRadius: 14,
@@ -269,6 +339,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#222",
   },
+  inputLabel: { color: "#888", fontSize: 12, marginBottom: 5 },
+  starRow: { flexDirection: "row", marginBottom: 10 },
   input: {
     color: "#fff",
     fontSize: 14,
@@ -284,6 +356,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   saveBtnText: { color: "#0a0a0f", fontWeight: "bold" },
+
   reviewItem: {
     backgroundColor: "#111",
     padding: 14,
@@ -292,11 +365,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1e1e2e",
   },
-  reviewUser: {
-    color: "#a78bfa",
-    fontSize: 14,
-    fontWeight: "bold",
-    marginBottom: 4,
+  revHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
   },
+  reviewUser: { color: "#a78bfa", fontSize: 14, fontWeight: "bold" },
   reviewComment: { color: "#ccc", fontSize: 14, lineHeight: 20 },
 });
