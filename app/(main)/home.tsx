@@ -104,7 +104,7 @@ export default function Home() {
                 if (currentQty < stockAvailable) {
                   addToCart(item);
                 } else {
-                  alert("Maximum stock reached!");
+                  alert("Maximum stock reached");
                 }
               }}
               variant="default"

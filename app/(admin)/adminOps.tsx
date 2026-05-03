@@ -37,12 +37,12 @@ export default function AdminOps() {
 
   const handleListProduct = async () => {
     if (!title || !price || !desc || !count) {
-      Alert.alert("Error", "Please fill in all the fields.");
+      Alert.alert("Error", "Please fill in all the fields");
       return;
     }
 
     if (!imageUrl && !image) {
-      Alert.alert("Error", "Please provide an image URL or pick a photo.");
+      Alert.alert("Error", "Please provide an image URL or pick a photo");
       return;
     }
 
@@ -60,7 +60,7 @@ export default function AdminOps() {
         createdAt: new Date().toISOString(),
       });
 
-      Alert.alert("Success", "Product listed successfully!");
+      Alert.alert("Success", "Product listed successfully");
 
       setTitle("");
       setPrice("");
@@ -73,13 +73,13 @@ export default function AdminOps() {
       router.back();
     } catch (error) {
       console.error(error);
-      Alert.alert("Error", "Could not save product to database.");
+      Alert.alert("Error", "Could not save product to database");
     }
   };
 
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ['images'],
       quality: 1,
     });
 

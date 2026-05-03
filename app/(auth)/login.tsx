@@ -47,7 +47,7 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      showCustomAlert("Missing Info", "Please fill in all fields.", "error");
+      showCustomAlert("Missing Info", "Please fill in all fields", "error");
       return;
     }
 
@@ -82,11 +82,11 @@ export default function Login() {
       if (error.code === "auth/invalid-credential") {
         showCustomAlert(
           "Login Failed",
-          "Incorrect email or password.",
+          "Incorrect email or password",
           "error",
         );
       } else {
-        showCustomAlert("Error", "An unexpected error occurred.", "error");
+        showCustomAlert("Error", "An unexpected error occurred", "error");
       }
     }
   };
@@ -95,7 +95,7 @@ export default function Login() {
     if (!email) {
       showCustomAlert(
         "Email Required",
-        "Please enter your email address first.",
+        "Please enter your email address first",
         "info",
       );
       return;
@@ -104,11 +104,11 @@ export default function Login() {
       await sendPasswordResetEmail(auth, email.trim());
       showCustomAlert(
         "Email Sent",
-        "Check your inbox for reset instructions.",
+        "Check your inbox for reset instructions",
         "success",
       );
     } catch (error: any) {
-      showCustomAlert("Reset Failed", "Failed to send reset email.", "error");
+      showCustomAlert("Reset Failed", "Failed to send reset email", "error");
     }
   };
 

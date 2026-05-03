@@ -55,7 +55,7 @@ export default function Signup() {
     if (!username || !email || !password || !confirmPassword) {
       showCustomAlert(
         "Missing Fields",
-        "Please fill in all fields to create your account.",
+        "Please fill in all fields to create your account",
         "error",
       );
       return;
@@ -64,7 +64,7 @@ export default function Signup() {
     if (password !== confirmPassword) {
       showCustomAlert(
         "Password Mismatch",
-        "Passwords do not match. Please check again.",
+        "Passwords do not match. Please check again",
         "error",
       );
       return;
@@ -88,7 +88,7 @@ export default function Signup() {
       await AsyncStorage.setItem("user_username", username);
 
       setLoading(false);
-      showCustomAlert("Welcome!", "Account created successfully.", "success");
+      showCustomAlert("Welcome", "Account created successfully", "success");
 
       setTimeout(() => {
         router.replace("/home");

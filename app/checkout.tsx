@@ -53,7 +53,7 @@ export default function Checkout() {
 
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert("Error", "You must be logged in.");
+      Alert.alert("Error", "You must be logged in");
       return;
     }
 
@@ -93,7 +93,7 @@ export default function Checkout() {
       await update(ref(db), updates);
 
       if (clearCart) clearCart();
-      Alert.alert("Success", "Order placed and stock updated!");
+      Alert.alert("Success", "Order placed and stock updated");
       router.replace("/home");
     } catch (error: any) {
       Alert.alert("Checkout Error", error.message);

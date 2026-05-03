@@ -58,7 +58,6 @@ export default function Marketplace() {
         setLoading(false);
       },
       (error) => {
-        console.error("Failed to fetch products:", error);
         setLoading(false);
       },
     );
@@ -191,7 +190,7 @@ export default function Marketplace() {
             <Text style={styles.emptyText}>
               {searchQuery
                 ? `No results found for "${searchQuery}"`
-                : "No products found in this range."}
+                : "No products found in this range"}
             </Text>
           </View>
         }
@@ -207,7 +206,7 @@ export default function Marketplace() {
                 if (currentQty < stockAvailable) {
                   addToCart(item);
                 } else {
-                  alert(`Sorry, only ${stockAvailable} in stock!`);
+                  alert(`Sorry, only ${stockAvailable} in stock`);
                 }
               }}
               variant="default"

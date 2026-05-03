@@ -94,10 +94,10 @@ export default function AdminOrders() {
       const orderPath = `users/${order.userId}/orders/${order.id}`;
       await update(ref(db, orderPath), { status: "cancelled" });
 
-      showAlert("Success", "Restocked and Refunded.", "success");
+      showAlert("Success", "Restocked and Refunded", "success");
     } catch (e) {
       console.error("Cancel error:", e);
-      showAlert("Error", "Action failed.", "error");
+      showAlert("Error", "Action failed", "error");
     }
   };
 

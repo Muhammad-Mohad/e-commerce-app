@@ -100,9 +100,9 @@ export default function AdminPanel() {
         image,
       });
       setEditVisible(false);
-      Alert.alert("Success", "Product updated!");
+      Alert.alert("Success", "Product updated");
     } catch (error) {
-      Alert.alert("Error", "Update failed.");
+      Alert.alert("Error", "Update failed");
     }
   };
 
@@ -116,10 +116,10 @@ export default function AdminPanel() {
         setSelectedId(null);
         Alert.alert(
           "Success",
-          "Product and all related reviews have been removed.",
+          "Product and all related reviews have been removed",
         );
       } catch (error) {
-        Alert.alert("Error", "Something went wrong while deleting.");
+        Alert.alert("Error", "Something went wrong while deleting");
       }
     }
   };

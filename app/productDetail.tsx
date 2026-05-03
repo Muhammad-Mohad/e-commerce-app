@@ -67,15 +67,15 @@ export default function ProductDetail() {
   const handleSaveReview = async () => {
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert("Error", "You must be logged in to review.");
+      Alert.alert("Error", "You must be logged in to review");
       return;
     }
     if (rating === 0) {
-      Alert.alert("Error", "Please select a star rating.");
+      Alert.alert("Error", "Please select a star rating");
       return;
     }
     if (!reviewText.trim()) {
-      Alert.alert("Error", "Comment cannot be empty.");
+      Alert.alert("Error", "Comment cannot be empty");
       return;
     }
     try {
@@ -94,13 +94,13 @@ export default function ProductDetail() {
           });
           Alert.alert(
             "Success",
-            isEditing ? "Review updated!" : "Review added!",
+            isEditing ? "Review updated" : "Review added",
           );
         },
         { onlyOnce: true },
       );
     } catch (error) {
-      Alert.alert("Error", "Failed to save review.");
+      Alert.alert("Error", "Failed to save review");
     }
   };
 
@@ -246,7 +246,7 @@ export default function ProductDetail() {
               ))
             ) : (
               <Text style={{ color: "#555", fontStyle: "italic" }}>
-                No reviews yet.
+                No reviews yet
               </Text>
             )}
           </View>

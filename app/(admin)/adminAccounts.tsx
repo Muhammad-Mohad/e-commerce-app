@@ -67,7 +67,7 @@ export default function AdminAccounts() {
   const confirmDelete = (userId: string, username: string) => {
     Alert.alert(
       "Delete Account",
-      `Are you sure you want to permanently delete ${username || "this user"}? This will restock all active orders and wipe their data.`,
+      `Are you sure you want to permanently delete ${username || "this user"}? This will restock all active orders and wipe their data`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -128,11 +128,11 @@ export default function AdminAccounts() {
       if (error.code === "auth/requires-recent-login") {
         showAlert(
           "Security",
-          "Please log out and log back in to delete your account.",
+          "Please log out and log back in to delete your account",
           "error",
         );
       } else {
-        showAlert("Error", "Action failed.", "error");
+        showAlert("Error", "Action failed", "error");
       }
     } finally {
       setActionLoading(false);
