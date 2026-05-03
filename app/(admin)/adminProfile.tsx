@@ -7,7 +7,6 @@ import {
   View,
   ActivityIndicator,
   Alert,
-  Platform,
 } from "react-native";
 import { auth, db } from "../../firebaseConfig";
 import { signOut } from "firebase/auth";
@@ -145,7 +144,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     color: "#a78bfa",
     textAlign: "center",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontFamily: "monospace",
   },
   brand: {
     color: "#fff",
@@ -153,7 +152,7 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     textAlign: "center",
     marginBottom: 40,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontFamily: "monospace",
   },
   profileCard: {
     backgroundColor: "#111",

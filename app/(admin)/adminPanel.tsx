@@ -12,7 +12,6 @@ import {
   Modal,
   TextInput,
   ScrollView,
-  Platform,
 } from "react-native";
 import DeleteModal from "../../src/components/DeleteModal";
 
@@ -360,7 +359,7 @@ const styles = StyleSheet.create({
     fontSize: 48,
     color: "#a78bfa",
     textAlign: "center",
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontFamily: "monospace",
   },
   brand: {
     color: "#fff",
@@ -368,7 +367,7 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     textAlign: "center",
     marginBottom: 20,
-    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+    fontFamily: "monospace",
   },
   section: { color: "#fff", marginBottom: 10, fontSize: 16, fontWeight: "600" },
 
