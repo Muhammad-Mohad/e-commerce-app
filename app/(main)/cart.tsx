@@ -64,7 +64,7 @@ export default function Cart() {
 
             <View style={styles.content}>
               <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.price}>${item.price}</Text>
+              <Text style={styles.price}>Rs. {item.price}</Text>
 
               <View style={styles.qty}>
                 <TouchableOpacity
@@ -99,7 +99,7 @@ export default function Cart() {
       <View style={styles.summary}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.total}>${total.toFixed(2)}</Text>
+          <Text style={styles.total}>Rs. {total.toFixed(2)}</Text>
         </View>
         <TouchableOpacity
           style={styles.checkout}

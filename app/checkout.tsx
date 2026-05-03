@@ -173,14 +173,14 @@ export default function Checkout() {
               <View key={item.id} style={styles.itemRow}>
                 <Text style={styles.itemTitle}>{item.title}</Text>
                 <Text style={styles.itemMeta}>
-                  {item.quantity} x {item.price} Rs.
+                  {item.quantity} x Rs. {item.price}
                 </Text>
               </View>
             ))}
 
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.total}>{total.toFixed(2)} Rs.</Text>
+              <Text style={styles.total}>Rs. {total.toFixed(2)}</Text>
             </View>
 
             <TouchableOpacity

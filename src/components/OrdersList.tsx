@@ -21,7 +21,7 @@ export default function OrdersList({ orders }: { orders: OrderType[] }) {
 
             <View style={styles.metaRow}>
               <Text style={styles.meta}>{order.items} items</Text>
-              <Text style={styles.meta}>${order.total}</Text>
+              <Text style={styles.meta}>Rs. {order.total}</Text>
             </View>
           </View>
         </View>
