@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { get, onValue, ref, remove, update } from "firebase/database";
+import { getAuth, deleteUser } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -80,10 +81,15 @@ export default function AdminAccounts() {
 
   const deleteAccount = async (userId: string) => {
     setActionLoading(true);
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+
     try {
       const userRef = ref(db, `users/${userId}`);
       const userSnap = await get(userRef);
       const userData = userSnap.val();
+
+      const updates: any = {};
 
       if (userData && userData.orders) {
         for (const orderId in userData.orders) {
@@ -95,20 +101,39 @@ export default function AdminAccounts() {
               const pSnap = await get(pRef);
 
               if (pSnap.exists()) {
-                const currentInventory = pSnap.val().count || 0; 
+                const currentInventory = pSnap.val().count || 0;
                 const purchasedQty = item.quantity || 0;
-                await update(pRef, { count: currentInventory + purchasedQty });
+                updates[`products/${item.id}/count`] =
+                  currentInventory + purchasedQty;
               }
             }
           }
         }
       }
 
+      if (Object.keys(updates).length > 0) {
+        await update(ref(db), updates);
+      }
+
       await remove(userRef);
-      showAlert("Deleted", "Account wiped and inventory restocked.", "success");
-    } catch (error) {
+
+      if (currentUser && currentUser.uid === userId) {
+        await deleteUser(currentUser);
+      }
+
+      showAlert("Deleted", "Account wiped and email freed up.", "success");
+    } catch (error: any) {
       console.error(error);
-      showAlert("Error", "Action failed.", "error");
+
+      if (error.code === "auth/requires-recent-login") {
+        showAlert(
+          "Security",
+          "Please log out and log back in to delete your account.",
+          "error",
+        );
+      } else {
+        showAlert("Error", "Action failed.", "error");
+      }
     } finally {
       setActionLoading(false);
     }
